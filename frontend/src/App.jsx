@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 
 export default function App() {
+  const [turn,setTurn] = useState('w')
   const [position, setPosition] = useState({
    a8: { pieceType: 'bR' }, b8: { pieceType: 'bN' }, c8: { pieceType: 'bB' }, d8: { pieceType: 'bQ' },
   e8: { pieceType: 'bK' }, f8: { pieceType: 'bB' }, g8: { pieceType: 'bN' }, h8: { pieceType: 'bR' },
@@ -19,6 +20,21 @@ export default function App() {
     if (!targetSquare) {
       return false
     }
+
+    const piece = position[sourceSquare]
+    if (!piece){
+      return false
+    }
+
+    if (piece.pieceType[0] !== turn){
+      return false
+    }
+
+    const targetPiece = position[targetSquare]
+    if(targetPiece && targetPiece.pieceType[0] === turn){
+      return false
+    }
+
     setPosition((prev) => {
       const next = {...prev }
       const piece= next[sourceSquare]
@@ -30,11 +46,16 @@ export default function App() {
       return next
     })
 
+    setTurn((prevTurn) =>(
+      prevTurn === 'w' ? 'b':'w'
+    ))
+
     return true
   }
 
   return (
     <div style={{width:480,height:480,margin:"24px auto"}}>
+      <div>{turn === 'w' ? "White to Move":"Black to Move"}</div>
       <Chessboard options={{position,onPieceDrop,allowDragging: true}} />
     </div>
   )
