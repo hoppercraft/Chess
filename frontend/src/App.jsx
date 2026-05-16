@@ -15,6 +15,14 @@ export default function App() {
   e1: { pieceType: 'wK' }, f1: { pieceType: 'wB' }, g1: { pieceType: 'wN' }, h1: { pieceType: 'wR' },
   })
 
+  function rankIndex(square){
+    return parseInt(square[1],10)
+  }
+
+  function fileIndex(square){
+    return square.charCodeAt(0) - 'a'.charCodeAt(0)
+  }
+
   //react-chessboard function to handle drag and drop functionality of chess pieces
   function onPieceDrop({sourceSquare,targetSquare }) {
     if (!targetSquare) {
@@ -33,6 +41,32 @@ export default function App() {
     const targetPiece = position[targetSquare]
     if(targetPiece && targetPiece.pieceType[0] === turn){
       return false
+    }
+
+    const pieceType = piece.pieceType[1]
+    
+    //Move logic for pawn
+    if(pieceType === 'P') {
+      const direction = piece.pieceType[0] === 'w'?1:-1
+      const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
+      const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
+      const isInSameFile = fileDiff === 0
+
+      const startPos = piece.pieceType[0] === 'w'?2:7
+      const isAtStart = rankIndex(sourceSquare) === startPos
+      
+      const middleRank = rankIndex(sourceSquare) + direction
+      const middleSquare = sourceSquare[0] + middleRank
+      const ismiddleEmpty = !position[middleSquare]
+
+
+      const isForward = isInSameFile && rankDiff === direction && !targetPiece
+      const isDoubleForward = isAtStart && ismiddleEmpty && isInSameFile && rankDiff === direction * 2 && !targetPiece
+      const isCapture = Math.abs(fileDiff) === 1 && targetPiece && rankDiff === direction
+
+      if(!isForward && !isCapture &&!isDoubleForward){
+        return false
+      }
     }
 
     setPosition((prev) => {
