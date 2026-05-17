@@ -25,21 +25,23 @@ export default function App() {
 
   //react-chessboard function to handle drag and drop functionality of chess pieces
   function onPieceDrop({sourceSquare,targetSquare }) {
+    
     if (!targetSquare) {
       return false
     }
 
     const piece = position[sourceSquare]
+    const pieceColor = piece.pieceType[0]
     if (!piece){
       return false
     }
 
-    if (piece.pieceType[0] !== turn){
+    if (pieceColor !== turn){
       return false
     }
 
     const targetPiece = position[targetSquare]
-    if(targetPiece && targetPiece.pieceType[0] === turn){
+    if(targetPiece && targetpieceColor === turn){
       return false
     }
 
@@ -47,12 +49,12 @@ export default function App() {
     
     //Move logic for pawn
     if(pieceType === 'P') {
-      const direction = piece.pieceType[0] === 'w'?1:-1
+      const direction = pieceColor === 'w'?1:-1
       const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
       const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
       const isInSameFile = fileDiff === 0
 
-      const startPos = piece.pieceType[0] === 'w'?2:7
+      const startPos = pieceColor === 'w'?2:7
       const isAtStart = rankIndex(sourceSquare) === startPos
       
       const middleRank = rankIndex(sourceSquare) + direction
