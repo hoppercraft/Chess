@@ -51,6 +51,14 @@ export default function App() {
     const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
     const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
 
+    function toSquare(file,rank){
+      if(file > 8 || file < 0 || rank > 8 || rank < 0){
+        return null
+      }
+
+      return String.fromCharCode('a'.charCodeAt(0) + file) + rank
+    }
+
     function isPathClear(source, target, position) {
       const fileDiff = fileIndex(target) - fileIndex(source)
       const rankDiff = rankIndex(target) - rankIndex(source)
@@ -62,7 +70,7 @@ export default function App() {
       let rank = rankIndex(source) + rankStep
 
       while(file !== fileIndex(target) || rank !== rankIndex(target)) {
-        const square = String.fromCharCode('a'.charCodeAt(0) + file) + rank
+        const square = toSquare(file,rank)
         if(position[square]){
           return false
         }
