@@ -43,13 +43,38 @@ export default function App() {
       return false
     }
 
+    //Hardcoded Piece Logic
     const pieceType = piece.pieceType[1]
+    const pieceColor = piece.pieceType[0]
+
+    
+    const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
+    const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
+
+    function isPathClear(source, target, position) {
+      const fileDiff = fileIndex(target) - fileIndex(source)
+      const rankDiff = rankIndex(target) - rankIndex(source)
+
+      const fileStep = fileDiff === 0 ? 0 : fileDiff / Math.abs(fileDiff)
+      const rankStep = rankDiff === 0 ? 0 : rankDiff / Math.abs(rankDiff)
+
+      let file = fileIndex(source) + fileStep
+      let rank = rankIndex(source) + rankStep
+
+      while(file !== fileIndex(target) || rank !== rankIndex(target)) {
+        const square = String.fromCharCode('a'.charCodeAt(0) + file) + rank
+        if(position[square]){
+          return false
+        }
+        file += fileStep
+        rank += rankStep
+      }
+      return true
+    }
     
     //Move logic for pawn
     if(pieceType === 'P') {
-      const direction = piece.pieceType[0] === 'w'?1:-1
-      const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
-      const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
+      const direction = pieceColor === 'w'?1:-1
       const isInSameFile = fileDiff === 0
 
       const startPos = piece.pieceType[0] === 'w'?2:7
@@ -65,6 +90,14 @@ export default function App() {
       const isCapture = Math.abs(fileDiff) === 1 && targetPiece && rankDiff === direction
 
       if(!isForward && !isCapture &&!isDoubleForward){
+        return false
+      }
+    }else if(pieceType === "R"){
+      const isStraight = fileDiff === 0 || rankDiff === 0
+      if(!isStraight) {
+        return false
+      }
+      if(!isPathClear(sourceSquare,targetSquare,position)){
         return false
       }
     }
