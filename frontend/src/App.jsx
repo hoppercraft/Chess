@@ -69,7 +69,6 @@ export default function App() {
       }
     }
 
-    if(pieceType === 'N')
 
     setPosition((prev) => {
       const next = {...prev }
