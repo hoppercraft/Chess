@@ -51,8 +51,12 @@ export default function App() {
     const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
     const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
 
+    const isDiagonal = Math.abs(fileDiff) === Math.abs(rankDiff) && fileDiff !== 0
+    const isStraight = fileDiff === 0 || rankDiff === 0
+
+
     function toSquare(file,rank){
-      if(file > 8 || file < 0 || rank > 8 || rank < 0){
+      if(file > 7 || file < 1 || rank > 7 || rank < 1){
         return null
       }
 
@@ -101,7 +105,6 @@ export default function App() {
         return false
       }
     }else if(pieceType === "R"){
-      const isStraight = fileDiff === 0 || rankDiff === 0
       if(!isStraight) {
         return false
       }
@@ -109,10 +112,22 @@ export default function App() {
         return false
       }
     }else if (pieceType === "B"){
-      const isDiagonal = Math.abs(fileDiff) === Math.abs(rankDiff) && fileDiff !== 0
       if(!isDiagonal){
         return false
       }
+      if(!isPathClear(sourceSquare,targetSquare,position)){
+        return false
+      }
+    }else if (pieceType === "N"){
+      const isLegal = Math.abs(fileDiff) === 1 && Math.abs(rankDiff) === 2 || Math.abs(rankDiff) === 1 && Math.abs(fileDiff) === 2
+      if(!isLegal){
+        return false
+      }
+    }else if(pieceType === "Q"){
+      if(!isDiagonal && !isStraight){
+        return false
+      }
+
       if(!isPathClear(sourceSquare,targetSquare,position)){
         return false
       }
