@@ -108,6 +108,14 @@ export default function App() {
       if(!isPathClear(sourceSquare,targetSquare,position)){
         return false
       }
+    }else if (pieceType === "B"){
+      const isDiagonal = Math.abs(fileDiff) === Math.abs(rankDiff) && fileDiff !== 0
+      if(!isDiagonal){
+        return false
+      }
+      if(!isPathClear(sourceSquare,targetSquare,position)){
+        return false
+      }
     }
 
 
