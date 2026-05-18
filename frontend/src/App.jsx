@@ -131,6 +131,11 @@ export default function App() {
       if(!isPathClear(sourceSquare,targetSquare,position)){
         return false
       }
+    }else if (pieceType === "K"){
+      const isKing = Math.abs(fileDiff) === 1 || Math.abs(rankDiff) === 1
+      if(!isKing){
+        return false
+      }
     }
 
 
