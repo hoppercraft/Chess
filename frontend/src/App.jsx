@@ -43,13 +43,50 @@ export default function App() {
       return false
     }
 
+    //Hardcoded Piece Logic
     const pieceType = piece.pieceType[1]
+    const pieceColor = piece.pieceType[0]
+
+    
+    const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
+    const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
+
+    const isDiagonal = Math.abs(fileDiff) === Math.abs(rankDiff) && fileDiff !== 0
+    const isStraight = fileDiff === 0 || rankDiff === 0
+
+
+    function toSquare(file,rank){
+      if(file > 7 || file < 1 || rank > 7 || rank < 1){
+        return null
+      }
+
+      return String.fromCharCode('a'.charCodeAt(0) + file) + rank
+    }
+
+    function isPathClear(source, target, position) {
+      const fileDiff = fileIndex(target) - fileIndex(source)
+      const rankDiff = rankIndex(target) - rankIndex(source)
+
+      const fileStep = fileDiff === 0 ? 0 : fileDiff / Math.abs(fileDiff)
+      const rankStep = rankDiff === 0 ? 0 : rankDiff / Math.abs(rankDiff)
+
+      let file = fileIndex(source) + fileStep
+      let rank = rankIndex(source) + rankStep
+
+      while(file !== fileIndex(target) || rank !== rankIndex(target)) {
+        const square = toSquare(file,rank)
+        if(position[square]){
+          return false
+        }
+        file += fileStep
+        rank += rankStep
+      }
+      return true
+    }
     
     //Move logic for pawn
     if(pieceType === 'P') {
-      const direction = piece.pieceType[0] === 'w'?1:-1
-      const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
-      const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
+      const direction = pieceColor === 'w'?1:-1
       const isInSameFile = fileDiff === 0
 
       const startPos = piece.pieceType[0] === 'w'?2:7
@@ -67,7 +104,40 @@ export default function App() {
       if(!isForward && !isCapture &&!isDoubleForward){
         return false
       }
+    }else if(pieceType === "R"){
+      if(!isStraight) {
+        return false
+      }
+      if(!isPathClear(sourceSquare,targetSquare,position)){
+        return false
+      }
+    }else if (pieceType === "B"){
+      if(!isDiagonal){
+        return false
+      }
+      if(!isPathClear(sourceSquare,targetSquare,position)){
+        return false
+      }
+    }else if (pieceType === "N"){
+      const isLegal = Math.abs(fileDiff) === 1 && Math.abs(rankDiff) === 2 || Math.abs(rankDiff) === 1 && Math.abs(fileDiff) === 2
+      if(!isLegal){
+        return false
+      }
+    }else if(pieceType === "Q"){
+      if(!isDiagonal && !isStraight){
+        return false
+      }
+
+      if(!isPathClear(sourceSquare,targetSquare,position)){
+        return false
+      }
+    }else if (pieceType === "K"){
+      const isKing = Math.abs(fileDiff) === 1 || Math.abs(rankDiff) === 1
+      if(!isKing){
+        return false
+      }
     }
+
 
     setPosition((prev) => {
       const next = {...prev }
