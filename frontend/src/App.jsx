@@ -56,7 +56,7 @@ export default function App() {
 
 
     function toSquare(file,rank){
-      if(file > 7 || file < 1 || rank > 7 || rank < 1){
+      if(file < 0 || file > 7 || rank < 1 || rank > 8){
         return null
       }
 
@@ -132,7 +132,7 @@ export default function App() {
         return false
       }
     }else if (pieceType === "K"){
-      const isKing = Math.abs(fileDiff) === 1 || Math.abs(rankDiff) === 1
+      const isKing = Math.abs(fileDiff) <= 1 && Math.abs(rankDiff) <= 1 && !(fileDiff===0 && rankDiff === 0)
       if(!isKing){
         return false
       }
