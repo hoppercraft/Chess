@@ -3,6 +3,10 @@ import { Chessboard } from 'react-chessboard'
 
 export default function App() {
   const [turn,setTurn] = useState('w')
+  const [castle, setCastle] = useState({
+  wK: false, wQ: false,
+  bK: false, bQ: false
+  })
   const [position, setPosition] = useState({
    a8: { pieceType: 'bR' }, b8: { pieceType: 'bN' }, c8: { pieceType: 'bB' }, d8: { pieceType: 'bQ' },
   e8: { pieceType: 'bK' }, f8: { pieceType: 'bB' }, g8: { pieceType: 'bN' }, h8: { pieceType: 'bR' },
@@ -14,6 +18,7 @@ export default function App() {
   a1: { pieceType: 'wR' }, b1: { pieceType: 'wN' }, c1: { pieceType: 'wB' }, d1: { pieceType: 'wQ' },
   e1: { pieceType: 'wK' }, f1: { pieceType: 'wB' }, g1: { pieceType: 'wN' }, h1: { pieceType: 'wR' },
   })
+
 
   function rankIndex(square){
     return parseInt(square[1],10)
@@ -131,20 +136,52 @@ export default function App() {
       if(!isPathClear(sourceSquare,targetSquare,position)){
         return false
       }
-    }else if (pieceType === "K"){
-      const isKing = Math.abs(fileDiff) <= 1 && Math.abs(rankDiff) <= 1 && !(fileDiff===0 && rankDiff === 0)
-      if(!isKing){
-        return false
-      }
-    }
+    }else if (pieceType === 'K') {
+      const isKingMove = Math.abs(fileDiff) <= 1 && Math.abs(rankDiff) <= 1 && !(fileDiff === 0 && rankDiff === 0)
 
+      const isCastleKingSide = pieceColor === 'w' && sourceSquare === 'e1' &&
+      targetSquare === 'g1' && !castle.wK && !castle.wQ && !position.f1 && !position.g1
+
+      const isCastleQueenSide = pieceColor === 'w' && sourceSquare === 'e1' &&targetSquare === 'c1' && !castle.wK && !castle.wQ && !position.d1 && !position.c1 && !position.b1
+
+      const isBlackCastleKingSide = pieceColor === 'b' && sourceSquare === 'e8' &&targetSquare === 'g8' && !castle.bK && !castle.bQ && !position.f8 && !position.g8
+
+      const isBlackCastleQueenSide =pieceColor === 'b' && sourceSquare === 'e8' &&targetSquare === 'c8' && !castle.bK && !castle.bQ && !position.d8 && !position.c8 && !position.b8
+
+  if (!isKingMove && !isCastleKingSide && !isCastleQueenSide && !isBlackCastleKingSide && !isBlackCastleQueenSide) {
+    return false
+  }
+}
+
+    if (pieceType === 'K') setCastle(c => ({ ...c, [turn + 'K']: true }))
+    if (pieceType === 'R') {
+      if (sourceSquare === 'a1') setCastle(c => ({ ...c, wQ: true }))
+      if (sourceSquare === 'h1') setCastle(c => ({ ...c, wK: true }))
+      if (sourceSquare === 'a8') setCastle(c => ({ ...c, bQ: true }))
+      if (sourceSquare === 'h8') setCastle(c => ({ ...c, bK: true }))
+    }
 
     setPosition((prev) => {
       const next = {...prev }
-      const piece= next[sourceSquare]
-      if (!piece) {
+      const movingPiece= next[sourceSquare]
+      if (!movingPiece) {
         return prev
       }
+      //castling rook move
+      if (pieceType === 'K' && sourceSquare === 'e1' && targetSquare === 'g1') {
+        next.f1 = next.h1
+        delete next.h1
+      } else if (pieceType === 'K' && sourceSquare === 'e1' && targetSquare === 'c1') {
+        next.d1 = next.a1
+        delete next.a1
+      } else if (pieceType === 'K' && sourceSquare === 'e8' && targetSquare === 'g8') {
+        next.f8 = next.h8
+        delete next.h8
+      } else if (pieceType === 'K' && sourceSquare === 'e8' && targetSquare === 'c8') {
+        next.d8 = next.a8
+        delete next.a8
+      }
+
       delete next[sourceSquare]
       next[targetSquare] = piece
       return next
