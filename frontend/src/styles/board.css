@@ -346,6 +346,117 @@ body {
 .btn-new-game:hover  { filter: brightness(1.1); }
 .btn-new-game:active { transform: translateY(1px); filter: brightness(0.95); }
 
+/* ── Captured pieces panel ─────────────────────────────────────────────────── */
+.captured-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+}
+
+.captured-header {
+  padding: 12px 16px;
+  background: linear-gradient(90deg, var(--wood-dark), var(--wood-mid));
+  border-bottom: 2px solid var(--panel-border);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--wood-pale);
+}
+
+.captured-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.captured-divider {
+  height: 1px;
+  background: var(--history-border);
+}
+
+.captured-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.captured-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.captured-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.captured-dot.dot-white {
+  background: var(--white-turn-bg);
+  border: 1.5px solid var(--text-muted);
+}
+
+.captured-dot.dot-black {
+  background: var(--wood-dark);
+  border: 1.5px solid var(--text-muted);
+}
+
+.captured-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.captured-score {
+  margin-left: auto;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: var(--wood-light);
+  font-weight: bold;
+}
+
+.captured-pieces-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 28px;
+  align-items: center;
+  padding-left: 18px;
+}
+
+.captured-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.captured-piece-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--history-row-alt);
+  border: 1px solid var(--history-border);
+  border-radius: var(--radius-sm);
+  padding: 2px 5px;
+}
+
+.captured-piece-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.captured-piece-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 800px) {
   .chess-app {

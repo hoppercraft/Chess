@@ -5,7 +5,8 @@ import Navbar         from './components/common/Navbar.jsx'
 import ChessBoard     from './components/board/ChessBoard.jsx'
 import GameInfo       from './components/game/GameInfo.jsx'
 import GameControls   from './components/game/GameControls.jsx'
-import MoveHistory    from './components/game/MoveHistory.jsx'
+import MoveHistory      from './components/game/MoveHistory.jsx'
+import CapturedPieces  from './components/game/CapturedPieces.jsx'
 
 import { INITIAL_POSITION, PIECE_SYMBOLS } from './utils/constants.js'
 import { applyMove }    from './logic/engine/applyMove.js'
@@ -18,6 +19,8 @@ export default function App() {
   const [showHistory,      setShowHistory]      = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
   const [lastMove,         setLastMove]         = useState(null)
+  const [capturedByWhite,  setCapturedByWhite]  = useState([]) // black pieces white took
+  const [capturedByBlack,  setCapturedByBlack]  = useState([]) // white pieces black took
 
   // ── Square click — select piece and preview valid moves ──────────────────
   function onSquareClick({ square }) {
@@ -41,6 +44,13 @@ export default function App() {
 
     const lm = { from: sourceSquare, to: targetSquare }
     setMoveHistory(prev => [...prev, notation])
+
+    // Track captured piece
+    if (targetPiece) {
+      if (turn === 'w') setCapturedByWhite(prev => [...prev, targetPiece.pieceType])
+      else              setCapturedByBlack(prev => [...prev, targetPiece.pieceType])
+    }
+
     setLastMove(lm)
     setHighlightSquares(buildHighlights(null, newPosition, lm))
     setPosition(newPosition)
@@ -55,6 +65,8 @@ export default function App() {
     setMoveHistory([])
     setLastMove(null)
     setHighlightSquares({})
+    setCapturedByWhite([])
+    setCapturedByBlack([])
   }
 
   return (
@@ -72,6 +84,10 @@ export default function App() {
 
         <aside className="side-panel">
           <GameInfo turn={turn} moveCount={moveHistory.length} />
+          <CapturedPieces
+            capturedByWhite={capturedByWhite}
+            capturedByBlack={capturedByBlack}
+          />
           <GameControls
             showHistory={showHistory}
             onToggleHistory={() => setShowHistory(p => !p)}
