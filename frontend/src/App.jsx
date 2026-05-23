@@ -1,167 +1,85 @@
 import { useState } from 'react'
-import { Chessboard } from 'react-chessboard'
+import './styles/board.css'
+
+import Navbar         from './components/common/Navbar.jsx'
+import ChessBoard     from './components/board/ChessBoard.jsx'
+import GameInfo       from './components/game/GameInfo.jsx'
+import GameControls   from './components/game/GameControls.jsx'
+import MoveHistory    from './components/game/MoveHistory.jsx'
+
+import { INITIAL_POSITION, PIECE_SYMBOLS } from './utils/constants.js'
+import { applyMove }    from './logic/engine/applyMove.js'
+import { buildHighlights } from './logic/engine/gameState.js'
 
 export default function App() {
-  const [turn,setTurn] = useState('w')
-  const [position, setPosition] = useState({
-   a8: { pieceType: 'bR' }, b8: { pieceType: 'bN' }, c8: { pieceType: 'bB' }, d8: { pieceType: 'bQ' },
-  e8: { pieceType: 'bK' }, f8: { pieceType: 'bB' }, g8: { pieceType: 'bN' }, h8: { pieceType: 'bR' },
-  a7: { pieceType: 'bP' }, b7: { pieceType: 'bP' }, c7: { pieceType: 'bP' }, d7: { pieceType: 'bP' },
-  e7: { pieceType: 'bP' }, f7: { pieceType: 'bP' }, g7: { pieceType: 'bP' }, h7: { pieceType: 'bP' },
+  const [turn,             setTurn]             = useState('w')
+  const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
+  const [moveHistory,      setMoveHistory]      = useState([])
+  const [showHistory,      setShowHistory]      = useState(false)
+  const [highlightSquares, setHighlightSquares] = useState({})
+  const [lastMove,         setLastMove]         = useState(null)
 
-  a2: { pieceType: 'wP' }, b2: { pieceType: 'wP' }, c2: { pieceType: 'wP' }, d2: { pieceType: 'wP' },
-  e2: { pieceType: 'wP' }, f2: { pieceType: 'wP' }, g2: { pieceType: 'wP' }, h2: { pieceType: 'wP' },
-  a1: { pieceType: 'wR' }, b1: { pieceType: 'wN' }, c1: { pieceType: 'wB' }, d1: { pieceType: 'wQ' },
-  e1: { pieceType: 'wK' }, f1: { pieceType: 'wB' }, g1: { pieceType: 'wN' }, h1: { pieceType: 'wR' },
-  })
-
-  function rankIndex(square){
-    return parseInt(square[1],10)
+  // ── Square click — select piece and preview valid moves ──────────────────
+  function onSquareClick({ square }) {
+    const piece = position[square]
+    if (piece && piece.pieceType[0] === turn) {
+      setHighlightSquares(buildHighlights(square, position, lastMove))
+    } else {
+      setHighlightSquares(buildHighlights(null, position, lastMove))
+    }
   }
 
-  function fileIndex(square){
-    return square.charCodeAt(0) - 'a'.charCodeAt(0)
-  }
+  // ── Drag & drop — validate, apply, and record the move ───────────────────
+  function onPieceDrop({ sourceSquare, targetSquare }) {
+    const newPosition = applyMove(sourceSquare, targetSquare, position, turn)
+    if (!newPosition) return false
 
-  //react-chessboard function to handle drag and drop functionality of chess pieces
-  function onPieceDrop({sourceSquare,targetSquare }) {
-    if (!targetSquare) {
-      return false
-    }
-
-    const piece = position[sourceSquare]
-    if (!piece){
-      return false
-    }
-
-    if (piece.pieceType[0] !== turn){
-      return false
-    }
-
+    const piece      = position[sourceSquare]
+    const type       = piece.pieceType[1]
     const targetPiece = position[targetSquare]
-    if(targetPiece && targetPiece.pieceType[0] === turn){
-      return false
-    }
+    const notation   = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
 
-    //Hardcoded Piece Logic
-    const pieceType = piece.pieceType[1]
-    const pieceColor = piece.pieceType[0]
-
-    
-    const fileDiff = fileIndex(targetSquare) - fileIndex(sourceSquare)
-    const rankDiff = rankIndex(targetSquare) - rankIndex(sourceSquare)
-
-    const isDiagonal = Math.abs(fileDiff) === Math.abs(rankDiff) && fileDiff !== 0
-    const isStraight = fileDiff === 0 || rankDiff === 0
-
-
-    function toSquare(file,rank){
-      if(file > 7 || file < 1 || rank > 7 || rank < 1){
-        return null
-      }
-
-      return String.fromCharCode('a'.charCodeAt(0) + file) + rank
-    }
-
-    function isPathClear(source, target, position) {
-      const fileDiff = fileIndex(target) - fileIndex(source)
-      const rankDiff = rankIndex(target) - rankIndex(source)
-
-      const fileStep = fileDiff === 0 ? 0 : fileDiff / Math.abs(fileDiff)
-      const rankStep = rankDiff === 0 ? 0 : rankDiff / Math.abs(rankDiff)
-
-      let file = fileIndex(source) + fileStep
-      let rank = rankIndex(source) + rankStep
-
-      while(file !== fileIndex(target) || rank !== rankIndex(target)) {
-        const square = toSquare(file,rank)
-        if(position[square]){
-          return false
-        }
-        file += fileStep
-        rank += rankStep
-      }
-      return true
-    }
-    
-    //Move logic for pawn
-    if(pieceType === 'P') {
-      const direction = pieceColor === 'w'?1:-1
-      const isInSameFile = fileDiff === 0
-
-      const startPos = piece.pieceType[0] === 'w'?2:7
-      const isAtStart = rankIndex(sourceSquare) === startPos
-      
-      const middleRank = rankIndex(sourceSquare) + direction
-      const middleSquare = sourceSquare[0] + middleRank
-      const ismiddleEmpty = !position[middleSquare]
-
-
-      const isForward = isInSameFile && rankDiff === direction && !targetPiece
-      const isDoubleForward = isAtStart && ismiddleEmpty && isInSameFile && rankDiff === direction * 2 && !targetPiece
-      const isCapture = Math.abs(fileDiff) === 1 && targetPiece && rankDiff === direction
-
-      if(!isForward && !isCapture &&!isDoubleForward){
-        return false
-      }
-    }else if(pieceType === "R"){
-      if(!isStraight) {
-        return false
-      }
-      if(!isPathClear(sourceSquare,targetSquare,position)){
-        return false
-      }
-    }else if (pieceType === "B"){
-      if(!isDiagonal){
-        return false
-      }
-      if(!isPathClear(sourceSquare,targetSquare,position)){
-        return false
-      }
-    }else if (pieceType === "N"){
-      const isLegal = Math.abs(fileDiff) === 1 && Math.abs(rankDiff) === 2 || Math.abs(rankDiff) === 1 && Math.abs(fileDiff) === 2
-      if(!isLegal){
-        return false
-      }
-    }else if(pieceType === "Q"){
-      if(!isDiagonal && !isStraight){
-        return false
-      }
-
-      if(!isPathClear(sourceSquare,targetSquare,position)){
-        return false
-      }
-    }else if (pieceType === "K"){
-      const isKing = Math.abs(fileDiff) === 1 || Math.abs(rankDiff) === 1
-      if(!isKing){
-        return false
-      }
-    }
-
-
-    setPosition((prev) => {
-      const next = {...prev }
-      const piece= next[sourceSquare]
-      if (!piece) {
-        return prev
-      }
-      delete next[sourceSquare]
-      next[targetSquare] = piece
-      return next
-    })
-
-    setTurn((prevTurn) =>(
-      prevTurn === 'w' ? 'b':'w'
-    ))
-
+    const lm = { from: sourceSquare, to: targetSquare }
+    setMoveHistory(prev => [...prev, notation])
+    setLastMove(lm)
+    setHighlightSquares(buildHighlights(null, newPosition, lm))
+    setPosition(newPosition)
+    setTurn(t => t === 'w' ? 'b' : 'w')
     return true
   }
 
+  // ── Reset ────────────────────────────────────────────────────────────────
+  function resetGame() {
+    setPosition({ ...INITIAL_POSITION })
+    setTurn('w')
+    setMoveHistory([])
+    setLastMove(null)
+    setHighlightSquares({})
+  }
+
   return (
-    <div style={{width:480,height:480,margin:"24px auto"}}>
-      <div>{turn === 'w' ? "White to Move":"Black to Move"}</div>
-      <Chessboard options={{position,onPieceDrop,allowDragging: true}} />
-    </div>
+    <>
+      <Navbar />
+
+      <main className="chess-app">
+        <ChessBoard
+          position={position}
+          turn={turn}
+          highlightSquares={highlightSquares}
+          onPieceDrop={onPieceDrop}
+          onSquareClick={onSquareClick}
+        />
+
+        <aside className="side-panel">
+          <GameInfo turn={turn} moveCount={moveHistory.length} />
+          <GameControls
+            showHistory={showHistory}
+            onToggleHistory={() => setShowHistory(p => !p)}
+            onNewGame={resetGame}
+          />
+          {showHistory && <MoveHistory moveHistory={moveHistory} />}
+        </aside>
+      </main>
+    </>
   )
 }
-
