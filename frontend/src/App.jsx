@@ -1,28 +1,39 @@
 import { useState } from 'react'
 import './styles/board.css'
 
-import Navbar         from './components/common/Navbar.jsx'
-import ChessBoard     from './components/board/ChessBoard.jsx'
-import GameInfo       from './components/game/GameInfo.jsx'
-import GameControls   from './components/game/GameControls.jsx'
-import MoveHistory      from './components/game/MoveHistory.jsx'
+import Navbar          from './components/common/Navbar.jsx'
+import ChessBoard      from './components/board/ChessBoard.jsx'
+import GameInfo        from './components/game/GameInfo.jsx'
+import GameControls    from './components/game/GameControls.jsx'
+import MoveHistory     from './components/game/MoveHistory.jsx'
 import CapturedPieces  from './components/game/CapturedPieces.jsx'
+import Dashboard       from './pages/Dashboard.jsx'
 
 import { INITIAL_POSITION, PIECE_SYMBOLS } from './utils/constants.js'
-import { applyMove }    from './logic/engine/applyMove.js'
+import { applyMove }       from './logic/engine/applyMove.js'
 import { buildHighlights } from './logic/engine/gameState.js'
 
 export default function App() {
+  // ── Routing ───────────────────────────────────────────────────────────────
+  const [page, setPage] = useState('dashboard') // 'dashboard' | 'pvp'
+
+  // ── Game state ────────────────────────────────────────────────────────────
   const [turn,             setTurn]             = useState('w')
   const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
   const [moveHistory,      setMoveHistory]      = useState([])
   const [showHistory,      setShowHistory]      = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
   const [lastMove,         setLastMove]         = useState(null)
-  const [capturedByWhite,  setCapturedByWhite]  = useState([]) // black pieces white took
-  const [capturedByBlack,  setCapturedByBlack]  = useState([]) // white pieces black took
+  const [capturedByWhite,  setCapturedByWhite]  = useState([])
+  const [capturedByBlack,  setCapturedByBlack]  = useState([])
 
-  // ── Square click — select piece and preview valid moves ──────────────────
+  // ── Navigate to a game mode ───────────────────────────────────────────────
+  function handleNavigate(mode) {
+    resetGame()
+    setPage(mode)
+  }
+
+  // ── Square click ──────────────────────────────────────────────────────────
   function onSquareClick({ square }) {
     const piece = position[square]
     if (piece && piece.pieceType[0] === turn) {
@@ -32,20 +43,19 @@ export default function App() {
     }
   }
 
-  // ── Drag & drop — validate, apply, and record the move ───────────────────
+  // ── Drag & drop ───────────────────────────────────────────────────────────
   function onPieceDrop({ sourceSquare, targetSquare }) {
     const newPosition = applyMove(sourceSquare, targetSquare, position, turn)
     if (!newPosition) return false
 
-    const piece      = position[sourceSquare]
-    const type       = piece.pieceType[1]
+    const piece       = position[sourceSquare]
+    const type        = piece.pieceType[1]
     const targetPiece = position[targetSquare]
-    const notation   = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
+    const notation    = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
 
     const lm = { from: sourceSquare, to: targetSquare }
     setMoveHistory(prev => [...prev, notation])
 
-    // Track captured piece
     if (targetPiece) {
       if (turn === 'w') setCapturedByWhite(prev => [...prev, targetPiece.pieceType])
       else              setCapturedByBlack(prev => [...prev, targetPiece.pieceType])
@@ -58,7 +68,7 @@ export default function App() {
     return true
   }
 
-  // ── Reset ────────────────────────────────────────────────────────────────
+  // ── Reset ─────────────────────────────────────────────────────────────────
   function resetGame() {
     setPosition({ ...INITIAL_POSITION })
     setTurn('w')
@@ -67,11 +77,23 @@ export default function App() {
     setHighlightSquares({})
     setCapturedByWhite([])
     setCapturedByBlack([])
+    setShowHistory(false)
   }
 
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+  if (page === 'dashboard') {
+    return (
+      <>
+        <Navbar />
+        <Dashboard onNavigate={handleNavigate} />
+      </>
+    )
+  }
+
+  // ── PvP board ─────────────────────────────────────────────────────────────
   return (
     <>
-      <Navbar />
+      <Navbar onBack={() => setPage('dashboard')} />
 
       <main className="chess-app">
         <ChessBoard
