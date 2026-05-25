@@ -50,6 +50,86 @@ function isPathClear(source, target, position) {
   return true
 }
 
+function findKingSquare(pos, color) {
+  for (const [sq, piece] of Object.entries(pos)) {
+    if (piece.pieceType === `${color}K`) return sq
+  }
+  return null
+}
+
+function isSquareAttacked(square, byColor, pos) {
+  for (const [from, piece] of Object.entries(pos)) {
+    if (piece.pieceType[0] !== byColor) continue
+    const type = piece.pieceType[1]
+    const fileDiff = fileIndex(square) - fileIndex(from)
+    const rankDiff = rankIndex(square) - rankIndex(from)
+    const absFile = Math.abs(fileDiff)
+    const absRank = Math.abs(rankDiff)
+
+    if (type === 'P') {
+      const dir = byColor === 'w' ? 1 : -1
+      if (rankDiff === dir && absFile === 1) return true
+    } else if (type === 'N') {
+      if ((absFile === 1 && absRank === 2) || (absFile === 2 && absRank === 1)) return true
+    } else if (type === 'B') {
+      if (absFile === absRank && absFile !== 0 && isPathClear(from, square, pos)) return true
+    } else if (type === 'R') {
+      if ((absFile === 0 || absRank === 0) && (absFile + absRank) !== 0 && isPathClear(from, square, pos)) return true
+    } else if (type === 'Q') {
+      const isDiagonal = absFile === absRank && absFile !== 0
+      const isStraight = absFile === 0 || absRank === 0
+      if ((isDiagonal || isStraight) && isPathClear(from, square, pos)) return true
+    } else if (type === 'K') {
+      if (absFile <= 1 && absRank <= 1 && (absFile + absRank) !== 0) return true
+    }
+  }
+  return false
+}
+
+function isInCheck(pos, color) {
+  const kingSquare = findKingSquare(pos, color)
+  if (!kingSquare) return false
+  const opponent = color === 'w' ? 'b' : 'w'
+  return isSquareAttacked(kingSquare, opponent, pos)
+}
+
+function makeMove(pos, sourceSquare, targetSquare) {
+  const next = { ...pos }
+  const movingPiece = next[sourceSquare]
+  if (!movingPiece) return pos
+  const pieceType = movingPiece.pieceType[1]
+
+  if (pieceType === 'K' && sourceSquare === 'e1' && targetSquare === 'g1') {
+    next.f1 = next.h1
+    delete next.h1
+  } else if (pieceType === 'K' && sourceSquare === 'e1' && targetSquare === 'c1') {
+    next.d1 = next.a1
+    delete next.a1
+  } else if (pieceType === 'K' && sourceSquare === 'e8' && targetSquare === 'g8') {
+    next.f8 = next.h8
+    delete next.h8
+  } else if (pieceType === 'K' && sourceSquare === 'e8' && targetSquare === 'c8') {
+    next.d8 = next.a8
+    delete next.a8
+  }
+
+  delete next[sourceSquare]
+  next[targetSquare] = movingPiece
+  return next
+}
+
+function hasAnyLegalMove(pos, color) {
+  for (const [from, piece] of Object.entries(pos)) {
+    if (piece.pieceType[0] !== color) continue
+    const { valid } = getValidMoves(from, pos)
+    for (const to of valid) {
+      const next = makeMove(pos, from, to)
+      if (!isInCheck(next, color)) return true
+    }
+  }
+  return false
+}
+
 function getValidMoves(square, pos) {
   const piece = pos[square]
   if (!piece) return { valid: [], blocked: [] }
@@ -129,6 +209,9 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
   const [lastMove, setLastMove] = useState(null)
+  const [capturedByWhite, setCapturedByWhite] = useState([])
+  const [capturedByBlack, setCapturedByBlack] = useState([])
+  const [status, setStatus] = useState('In Play')
 
   function buildHighlights(square, pos, lm) {
     const h = {}
@@ -162,6 +245,7 @@ export default function App() {
 
   function onPieceDrop({ sourceSquare, targetSquare }) {
     if (!targetSquare) return false
+    if (status === 'Checkmate' || status === 'Stalemate') return false
     const piece = position[sourceSquare]
     if (!piece) return false
     if (piece.pieceType[0] !== turn) return false
@@ -239,6 +323,9 @@ export default function App() {
   }
 }
 
+    const tentative = makeMove(position, sourceSquare, targetSquare)
+    if (isInCheck(tentative, turn)) return false
+
     if (pieceType === 'K') setCastle(c => ({ ...c, [turn + 'K']: true }))
     if (pieceType === 'R') {
       if (sourceSquare === 'a1') setCastle(c => ({ ...c, wQ: true }))
@@ -251,36 +338,27 @@ export default function App() {
     const notation = `${symbols[pieceType]||''}${sourceSquare}${targetPiece?'x':'→'}${targetSquare}`
     setMoveHistory(prev => [...prev, notation])
 
+    if (targetPiece) {
+      if (turn === 'w') setCapturedByWhite(prev => [...prev, targetPiece.pieceType])
+      else setCapturedByBlack(prev => [...prev, targetPiece.pieceType])
+    }
+
     const lm = { from: sourceSquare, to: targetSquare }
     setLastMove(lm)
     setHighlightSquares(buildHighlights(null, position, lm))
 
-    setPosition((prev) => {
-      const next = {...prev }
-      const movingPiece= next[sourceSquare]
-      if (!movingPiece) {
-        return prev
-      }
-      //castling rook move
-      if (pieceType === 'K' && sourceSquare === 'e1' && targetSquare === 'g1') {
-        next.f1 = next.h1
-        delete next.h1
-      } else if (pieceType === 'K' && sourceSquare === 'e1' && targetSquare === 'c1') {
-        next.d1 = next.a1
-        delete next.a1
-      } else if (pieceType === 'K' && sourceSquare === 'e8' && targetSquare === 'g8') {
-        next.f8 = next.h8
-        delete next.h8
-      } else if (pieceType === 'K' && sourceSquare === 'e8' && targetSquare === 'c8') {
-        next.d8 = next.a8
-        delete next.a8
-      }
+    const nextPosition = tentative
+    const nextTurn = turn === 'w' ? 'b' : 'w'
+    const inCheck = isInCheck(nextPosition, nextTurn)
+    const hasMove = hasAnyLegalMove(nextPosition, nextTurn)
+    let nextStatus = 'In Play'
+    if (inCheck && !hasMove) nextStatus = 'Checkmate'
+    else if (inCheck) nextStatus = 'Check'
+    else if (!inCheck && !hasMove) nextStatus = 'Stalemate'
 
-      delete next[sourceSquare]
-      next[targetSquare] = piece
-      return next
-    })
-    setTurn(t => t === 'w' ? 'b' : 'w')
+    setPosition(nextPosition)
+    setStatus(nextStatus)
+    setTurn(nextTurn)
     return true
   }
 
@@ -288,40 +366,43 @@ export default function App() {
     setPosition({ ...INITIAL_POSITION })
     setTurn('w')
     setMoveHistory([])
+    setCapturedByWhite([])
+    setCapturedByBlack([])
     setLastMove(null)
     setHighlightSquares({})
+    setStatus('In Play')
   }
 
   return (
     <>
       <header className="chess-header">
-        <span className="crown-icon">♚</span>
         <h1>Chess</h1>
-        <span className="crown-icon">♔</span>
       </header>
 
       <main className="chess-app">
-        <section className="board-section">
-          <div className={`turn-indicator ${turn === 'w' ? 'white' : 'black'}`}>
-            <span className="turn-dot" />
-            {turn === 'w' ? 'White to Move' : 'Black to Move'}
-          </div>
-          <div className="board-wrapper">
-            <div style={{ width: 480, height: 480 }}>
-              <Chessboard options={{
-                position,
-                onPieceDrop,
-                allowDragging: true,
-                squareStyles: highlightSquares,
-                onSquareClick,
-              }} />
-            </div>
-          </div>
-        </section>
+        <div className={`turn-indicator ${turn === 'w' ? 'white' : 'black'}`}>
+          <span className="turn-dot" />
+          {turn === 'w' ? 'White to Move' : 'Black to Move'}
+        </div>
 
-        <aside className="side-panel">
+        <div className="main-columns">
+          <section className="board-section">
+            <div className="board-wrapper">
+              <div style={{ width: 480, height: 480 }}>
+                <Chessboard options={{
+                  position,
+                  onPieceDrop,
+                  allowDragging: true,
+                  squareStyles: highlightSquares,
+                  onSquareClick,
+                }} />
+              </div>
+            </div>
+          </section>
+
+          <aside className="side-panel">
           <div className="game-info">
-            <div className="game-info-header">♟ Game Info</div>
+            <div className="game-info-header">Game Info</div>
             <div className="game-info-body">
               <div className="info-row">
                 <span className="info-label">Mode</span>
@@ -335,6 +416,28 @@ export default function App() {
                 <span className="info-label">Moves</span>
                 <span className="info-value">{moveHistory.length}</span>
               </div>
+              <div className="info-row">
+                <span className="info-label">Status</span>
+                <span className="info-value">{status}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="captured-panel">
+            <div className="captured-header"> Captured</div>
+            <div className="captured-body">
+              <div className="captured-row">
+                <span className="captured-label">White</span>
+                <span className="captured-value">
+                  {capturedByWhite.length === 0 ? 'None' : capturedByWhite.join(' ')}
+                </span>
+              </div>
+              <div className="captured-row">
+                <span className="captured-label">Black</span>
+                <span className="captured-value">
+                  {capturedByBlack.length === 0 ? 'None' : capturedByBlack.join(' ')}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -343,14 +446,14 @@ export default function App() {
               className={`btn-history ${showHistory ? 'active' : ''}`}
               onClick={() => setShowHistory(p => !p)}
             >
-              📜 {showHistory ? 'Hide History' : 'Show History'}
+               {showHistory ? 'Hide History' : 'Show History'}
             </button>
             <button className="btn-new-game" onClick={resetGame}>New Game</button>
           </div>
 
           {showHistory && (
             <div className="move-history">
-              <div className="move-history-header">📜 Move History</div>
+              <div className="move-history-header"> Move History</div>
               <div className="move-history-body">
                 {moveHistory.length === 0 ? (
                   <div className="move-history-empty">No moves yet</div>
@@ -366,7 +469,8 @@ export default function App() {
               </div>
             </div>
           )}
-        </aside>
+          </aside>
+        </div>
       </main>
     </>
   )
