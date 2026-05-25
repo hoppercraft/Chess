@@ -6,5 +6,7 @@ frontend/dist
 # Backend: ignore virtualenv and env files
 backend/.venv/
 backend/.env
+backend/venv/
+backend/env
 __pycache__/
 *.pyc
