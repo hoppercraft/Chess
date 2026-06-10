@@ -1,6 +1,6 @@
 import { fileIndex, rankIndex } from '../../utils/coordinates.js'
 import { isPathClear } from '../board/boardHelpers.js'
-
+import { isLegalMove } from '../validation/isLegalMove.js'
 /**
  * Validates a drag-and-drop move and, if legal, returns the new board position.
  *
@@ -58,8 +58,26 @@ export function applyMove(sourceSquare, targetSquare, position, turn) {
   }
 
   // All checks passed — build the new position
-  const next = { ...position }
-  next[targetSquare] = next[sourceSquare]
-  delete next[sourceSquare]
-  return next
+ const next = { ...position }
+
+next[targetSquare] = next[sourceSquare]
+delete next[sourceSquare]
+
+if (
+  !isLegalMove(
+    sourceSquare,
+    targetSquare,
+    position,
+    turn
+  )
+) {
+  return false
+}
+console.log(
+  'Legal move:',
+  sourceSquare,
+  '->',
+  targetSquare
+)
+return next
 }

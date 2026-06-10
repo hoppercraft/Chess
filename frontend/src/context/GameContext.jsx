@@ -2,12 +2,18 @@ import { createContext, useContext, useState } from 'react'
 import { INITIAL_POSITION, PIECE_SYMBOLS } from '../utils/constants.js'
 import { applyMove }       from '../logic/engine/applyMove.js'
 import { buildHighlights } from '../logic/engine/gameState.js'
-
+import { isCheck } from '../logic/validation/isCheck.js'
+import { isCheckmate } from '../logic/validation/isCheckmate.js'
+import { isStalemate } from '../logic/validation/isStalemate.js'
 const GameContext = createContext(null)
+
+
 
 export function GameProvider({ children }) {
   const [turn,             setTurn]             = useState('w')
+  const [gameStatus, setGameStatus] = useState('playing')
   const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
+ // console.log(position)
   const [moveHistory,      setMoveHistory]      = useState([])
   const [showHistory,      setShowHistory]      = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
@@ -44,24 +50,57 @@ export function GameProvider({ children }) {
     setLastMove(lm)
     setHighlightSquares(buildHighlights(null, newPosition, lm))
     setPosition(newPosition)
-    setTurn(t => t === 'w' ? 'b' : 'w')
+    const nextTurn = turn === 'w' ? 'b' : 'w'
+    console.log(
+  'Check:',
+  isCheck(newPosition, nextTurn)
+)
+    if (
+  isCheckmate(
+    newPosition,
+    nextTurn
+  )
+) {
+  setGameStatus('checkmate')
+}
+else if (
+  isStalemate(
+    newPosition,
+    nextTurn
+  )
+) {
+  setGameStatus('stalemate')
+}
+else if (
+  isCheck(
+    newPosition,
+    nextTurn
+  )
+) {
+  setGameStatus('check')
+}
+else {
+  setGameStatus('playing')
+}
+    setTurn(nextTurn)
     return true
   }
 
   function resetGame() {
-    setPosition({ ...INITIAL_POSITION })
-    setTurn('w')
-    setMoveHistory([])
-    setLastMove(null)
-    setHighlightSquares({})
-    setCapturedByWhite([])
-    setCapturedByBlack([])
-    setShowHistory(false)
-  }
+  setPosition({ ...INITIAL_POSITION })
+  setTurn('w')
+  setGameStatus('playing')
+  setMoveHistory([])
+  setLastMove(null)
+  setHighlightSquares({})
+  setCapturedByWhite([])
+  setCapturedByBlack([])
+  setShowHistory(false)
+}
 
   return (
     <GameContext.Provider value={{
-      turn, position, moveHistory, showHistory, setShowHistory,
+      turn, gameStatus, position, moveHistory, showHistory, setShowHistory,
       highlightSquares, capturedByWhite, capturedByBlack,
       onSquareClick, onPieceDrop, resetGame,
     }}>
