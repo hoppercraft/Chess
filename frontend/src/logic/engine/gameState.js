@@ -8,7 +8,7 @@ import { getValidMoves } from '../engine/moveGenerator.js'
  * @param {{ from, to }|null} lm  - Last move, used for the green trail
  * @returns {object} squareStyles map
  */
-export function buildHighlights(selected, pos, lm,castleRights) {
+export function buildHighlights(selected, pos, lm,castleRights,enPassantSquare) {
   const h = {}
 
   // Always paint the last-move trail first (lowest priority)
@@ -23,7 +23,8 @@ const { valid, blocked } =
   getValidMoves(
     selected,
     pos,
-    castleRights
+    castleRights,
+    enPassantSquare
   )
 
   valid.forEach(sq   => { h[sq]      = { backgroundColor: 'rgba(255,165,0,0.6)' } })

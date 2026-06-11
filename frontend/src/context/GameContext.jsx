@@ -25,6 +25,7 @@ export function GameProvider({ children }) {
   bLeftRookMoved: false,
   bRightRookMoved: false,
 })
+  const [enPassantSquare, setEnPassantSquare] = useState(null)
   const [moveHistory,      setMoveHistory]      = useState([])
   const [showHistory,      setShowHistory]      = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
@@ -35,9 +36,9 @@ export function GameProvider({ children }) {
   function onSquareClick({ square }) {
     const piece = position[square]
     if (piece && piece.pieceType[0] === turn) {
-      setHighlightSquares(buildHighlights(square, position, lastMove, castleRights))
+      setHighlightSquares(buildHighlights(square, position, lastMove, castleRights, enPassantSquare))
     } else {
-      setHighlightSquares(buildHighlights(null, position, lastMove, castleRights))
+      setHighlightSquares(buildHighlights(null, position, lastMove, castleRights, enPassantSquare))
     }
   }
 
@@ -50,10 +51,40 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
     return false
   }
 
-  const newPosition = applyMove(sourceSquare, targetSquare, position, turn)
+  const newPosition = applyMove(sourceSquare, targetSquare, position, turn, enPassantSquare)
   if (!newPosition) return false
 
   const piece       = position[sourceSquare]
+
+  // handle en passanr target square setting a pawn double move 
+  // and reset after every move if not a double pawn move
+
+
+  if (piece.pieceType[1] === 'P') {
+
+  const startRank = Number(sourceSquare[1])
+  const endRank = Number(targetSquare[1])
+
+  if (Math.abs(endRank - startRank) === 2) {
+
+    const middleRank =
+      (startRank + endRank) / 2
+
+    setEnPassantSquare(
+      sourceSquare[0] + middleRank
+    )
+
+  } else {
+
+    setEnPassantSquare(null)
+
+  }
+
+} else {
+
+  setEnPassantSquare(null)
+
+}
 
    // castling rights update after every move from or to the relevant squares 
   const rights = { ...castleRights }
@@ -87,7 +118,7 @@ setCastleRights(rights)
   }
 
   setLastMove(lm)
-  setHighlightSquares(buildHighlights(null, newPosition, lm, castleRights))
+  setHighlightSquares(buildHighlights(null, newPosition, lm, castleRights,enPassantSquare))
   setPosition(newPosition)
 
   const nextTurn = turn === 'w' ? 'b' : 'w'

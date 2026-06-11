@@ -10,7 +10,7 @@ import { isLegalMove } from '../validation/isLegalMove.js'
  * @param {string} turn          - 'w' or 'b'
  * @returns {object|false}  New position map on success, false if the move is illegal.
  */
-export function applyMove(sourceSquare, targetSquare, position, turn) {
+export function applyMove(sourceSquare, targetSquare, position, turn, enPassantSquare = null) {
   if (!targetSquare) return false
 
   const piece = position[sourceSquare]
@@ -33,8 +33,25 @@ export function applyMove(sourceSquare, targetSquare, position, turn) {
     const midEmpty  = !position[midSq]
     const fwd    = fd === 0 && rd === dir  && !targetPiece
     const dblFwd = rankIndex(sourceSquare) === startRank && midEmpty && fd === 0 && rd === dir * 2 && !targetPiece
-    const cap    = af === 1 && rd === dir  && !!targetPiece
-    if (!fwd && !dblFwd && !cap) return false
+ const cap =
+  af === 1 &&
+  rd === dir &&
+  !!targetPiece
+
+const enPassant =
+  af === 1 &&
+  rd === dir &&
+  !targetPiece &&
+  targetSquare === enPassantSquare
+
+if (
+  !fwd &&
+  !dblFwd &&
+  !cap &&
+  !enPassant
+) {
+  return false
+}
   }
   else if (type === 'R') {
     if (fd !== 0 && rd !== 0) return false
@@ -71,6 +88,25 @@ const next = { ...position }
 
 next[targetSquare] = next[sourceSquare]
 delete next[sourceSquare]
+// handle an en passant capture by removing the captured pawn from the board in the new position
+
+if (
+  type === 'P' &&
+  af === 1 &&
+  !targetPiece &&
+  targetSquare === enPassantSquare
+) {
+
+  const capturedRank =
+    rankIndex(targetSquare) +
+    (turn === 'w' ? -1 : 1)
+
+  const capturedSquare =
+    targetSquare[0] + capturedRank
+
+  delete next[capturedSquare]
+}
+
 
 if (
   !isLegalMove(

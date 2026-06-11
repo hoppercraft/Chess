@@ -12,7 +12,8 @@ import { fileIndex, rankIndex, toSquare } from '../../utils/coordinates.js'
 export function getValidMoves(
   square,
   pos,
-  castleRights = null
+  castleRights = null,
+  enPassantSquare = null
 ) {
   const piece = pos[square]
   if (!piece) return { valid: [], blocked: [] }
@@ -68,12 +69,29 @@ export function getValidMoves(
       blocked.push(fwd)
     }
 
+
+
+    // pawn captures and en passant
     ;[-1, 1].forEach(df => {
-      const cap = toSquare(fi + df, ri + dir)
-      if (cap && pos[cap]) {
-        pos[cap].pieceType[0] !== color ? valid.push(cap) : blocked.push(cap)
-      }
-    })
+  const cap = toSquare(fi + df, ri + dir)
+
+  if (!cap) return
+
+  if (pos[cap]) {
+
+    pos[cap].pieceType[0] !== color
+      ? valid.push(cap)
+      : blocked.push(cap)
+
+  }
+
+  else if (
+    enPassantSquare &&
+    cap === enPassantSquare
+  ) {
+    valid.push(cap)
+  }
+})
   }
   else if (type === 'R') slide([[1,0],[-1,0],[0,1],[0,-1]])
   else if (type === 'B') slide([[1,1],[1,-1],[-1,1],[-1,-1]])
