@@ -27,6 +27,7 @@ export function GameProvider({ children }) {
 })
   const [enPassantSquare, setEnPassantSquare] = useState(null)
   const [moveHistory,      setMoveHistory]      = useState([])
+  const [promotionData, setPromotionData] = useState(null)
   const [showHistory,      setShowHistory]      = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
   const [lastMove,         setLastMove]         = useState(null)
@@ -55,6 +56,27 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
   if (!newPosition) return false
 
   const piece       = position[sourceSquare]
+
+  // handle promotion target square setting and promotion piece selection trigger
+
+const promotionRank =
+  piece.pieceType[0] === 'w'
+    ? '8'
+    : '1'
+
+if (
+  piece.pieceType[1] === 'P' &&
+  targetSquare[1] === promotionRank
+) {
+  setPromotionData({
+    sourceSquare,
+    targetSquare,
+    color: piece.pieceType[0],
+  })
+
+  return false
+}
+
 
   // handle en passanr target square setting a pawn double move 
   // and reset after every move if not a double pawn move
