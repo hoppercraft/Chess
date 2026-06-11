@@ -162,7 +162,50 @@ setCastleRights(rights)
 
   return true
 }
+// function to handle promotion piece selection and 
+// promotion move application after a pawn reaches thepromotion rank on the board
+function promotePawn(pieceType) {
 
+  if (!promotionData) return
+
+  const {
+    sourceSquare,
+    targetSquare,
+    color,
+  } = promotionData
+
+  const next = { ...position }
+
+  delete next[sourceSquare]
+
+  next[targetSquare] = {
+    pieceType: color + pieceType,
+  }
+
+  setPosition(next)
+
+  setPromotionData(null)
+
+  const nextTurn =
+    turn === 'w'
+      ? 'b'
+      : 'w'
+
+  if (isCheckmate(next, nextTurn)) {
+    setGameStatus('checkmate')
+  }
+  else if (isStalemate(next, nextTurn)) {
+    setGameStatus('stalemate')
+  }
+  else if (isCheck(next, nextTurn)) {
+    setGameStatus('check')
+  }
+  else {
+    setGameStatus('playing')
+  }
+
+  setTurn(nextTurn)
+}
   function resetGame() {
   setPosition({ ...INITIAL_POSITION })
   setTurn('w')
@@ -190,10 +233,22 @@ setCastleRights(rights)
 
   return (
     <GameContext.Provider value={{
-      turn, gameStatus, position, moveHistory, showHistory, setShowHistory,
-      highlightSquares, capturedByWhite, capturedByBlack,
-      onSquareClick, onPieceDrop, resetGame,
-    }}>
+  turn,
+  gameStatus,
+  position,
+  moveHistory,
+  showHistory,
+  setShowHistory,
+  highlightSquares,
+  capturedByWhite,
+  capturedByBlack,
+  onSquareClick,
+  onPieceDrop,
+  resetGame,
+
+  promotionData,
+  promotePawn,
+}}>
       {children}
     </GameContext.Provider>
   )

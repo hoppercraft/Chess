@@ -1195,3 +1195,25 @@ body {
   font-size: 48px;
   animation: crown-float 1.2s ease-in-out infinite;
 }
+.promotion-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.promotion-modal {
+  background: #222;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.promotion-modal button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  cursor: pointer;
+}

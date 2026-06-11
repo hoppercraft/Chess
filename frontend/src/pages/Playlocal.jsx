@@ -5,13 +5,15 @@ import GameInfo       from '../components/game/GameInfo.jsx'
 import GameControls   from '../components/game/GameControls.jsx'
 import MoveHistory    from '../components/game/MoveHistory.jsx'
 import CapturedPieces from '../components/game/CapturedPieces.jsx'
+import PromotionModal from '../components/game/PromotionModal.jsx'
+
 
 export default function PlayLocal() {
   const navigate = useNavigate()
   const {
     turn, gameStatus,position, moveHistory, showHistory, setShowHistory,
     highlightSquares, capturedByWhite, capturedByBlack,
-    onSquareClick, onPieceDrop, resetGame,
+    onSquareClick, onPieceDrop, resetGame,promotionData, promotePawn,
   } = useGame()
 
   return (
@@ -38,6 +40,7 @@ export default function PlayLocal() {
         />
         {showHistory && <MoveHistory moveHistory={moveHistory} />}
       </aside>
+      {promotionData && ( <PromotionModal color={promotionData.color} onSelect={promotePawn} /> )}
     </main>
   )
 }
