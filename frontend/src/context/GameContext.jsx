@@ -12,8 +12,19 @@ const GameContext = createContext(null)
 export function GameProvider({ children }) {
   const [turn,             setTurn]             = useState('w')
   const [gameStatus, setGameStatus] = useState('playing')
+
   const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
  // console.log(position)
+ const [castleRights, setCastleRights] = useState({
+  wKingMoved: false,
+  bKingMoved: false,
+
+  wLeftRookMoved: false,
+  wRightRookMoved: false,
+
+  bLeftRookMoved: false,
+  bRightRookMoved: false,
+})
   const [moveHistory,      setMoveHistory]      = useState([])
   const [showHistory,      setShowHistory]      = useState(false)
   const [highlightSquares, setHighlightSquares] = useState({})
@@ -24,9 +35,9 @@ export function GameProvider({ children }) {
   function onSquareClick({ square }) {
     const piece = position[square]
     if (piece && piece.pieceType[0] === turn) {
-      setHighlightSquares(buildHighlights(square, position, lastMove))
+      setHighlightSquares(buildHighlights(square, position, lastMove, castleRights))
     } else {
-      setHighlightSquares(buildHighlights(null, position, lastMove))
+      setHighlightSquares(buildHighlights(null, position, lastMove, castleRights))
     }
   }
 
@@ -43,6 +54,23 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
   if (!newPosition) return false
 
   const piece       = position[sourceSquare]
+
+   // castling rights update after every move from or to the relevant squares 
+  const rights = { ...castleRights }
+
+if (sourceSquare === 'e1') rights.wKingMoved = true
+if (sourceSquare === 'e8') rights.bKingMoved = true
+
+if (sourceSquare === 'a1') rights.wLeftRookMoved = true
+if (sourceSquare === 'h1') rights.wRightRookMoved = true
+
+if (sourceSquare === 'a8') rights.bLeftRookMoved = true
+if (sourceSquare === 'h8') rights.bRightRookMoved = true
+
+setCastleRights(rights)
+
+
+
   const type        = piece.pieceType[1]
   const targetPiece = position[targetSquare]
   const notation    = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
@@ -59,7 +87,7 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
   }
 
   setLastMove(lm)
-  setHighlightSquares(buildHighlights(null, newPosition, lm))
+  setHighlightSquares(buildHighlights(null, newPosition, lm, castleRights))
   setPosition(newPosition)
 
   const nextTurn = turn === 'w' ? 'b' : 'w'
@@ -92,6 +120,19 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
   setCapturedByWhite([])
   setCapturedByBlack([])
   setShowHistory(false)
+// reset castling rights to initial state on game reset 
+  setCastleRights({
+  wKingMoved: false,
+  bKingMoved: false,
+
+  wLeftRookMoved: false,
+  wRightRookMoved: false,
+
+  bLeftRookMoved: false,
+  bRightRookMoved: false,
+})
+
+
 }
 
   return (

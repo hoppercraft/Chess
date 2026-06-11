@@ -9,7 +9,11 @@ import { fileIndex, rankIndex, toSquare } from '../../utils/coordinates.js'
  *   valid   – squares the piece can legally move to (empty or enemy-occupied)
  *   blocked – squares occupied by a friendly piece (highlighted differently)
  */
-export function getValidMoves(square, pos) {
+export function getValidMoves(
+  square,
+  pos,
+  castleRights = null
+) {
   const piece = pos[square]
   if (!piece) return { valid: [], blocked: [] }
 
@@ -79,11 +83,72 @@ export function getValidMoves(square, pos) {
       push(toSquare(fileIndex(square) + df, rankIndex(square) + dr))
     })
   }
-  else if (type === 'K') {
-    [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([df, dr]) => {
-      push(toSquare(fileIndex(square) + df, rankIndex(square) + dr))
-    })
-  }
+ else if (type === 'K') {
 
+  [
+    [1,0],[-1,0],
+    [0,1],[0,-1],
+    [1,1],[1,-1],
+    [-1,1],[-1,-1]
+  ].forEach(([df, dr]) => {
+    push(
+      toSquare(
+        fileIndex(square) + df,
+        rankIndex(square) + dr
+      )
+    )
+  })
+
+  if (castleRights) {
+
+    if (
+      color === 'w' &&
+      square === 'e1' &&
+      !castleRights.wKingMoved
+    ) {
+
+      if (
+        !castleRights.wRightRookMoved &&
+        !pos.f1 &&
+        !pos.g1
+      ) {
+        valid.push('g1')
+      }
+
+      if (
+        !castleRights.wLeftRookMoved &&
+        !pos.b1 &&
+        !pos.c1 &&
+        !pos.d1
+      ) {
+        valid.push('c1')
+      }
+    }
+
+    if (
+      color === 'b' &&
+      square === 'e8' &&
+      !castleRights.bKingMoved
+    ) {
+
+      if (
+        !castleRights.bRightRookMoved &&
+        !pos.f8 &&
+        !pos.g8
+      ) {
+        valid.push('g8')
+      }
+
+      if (
+        !castleRights.bLeftRookMoved &&
+        !pos.b8 &&
+        !pos.c8 &&
+        !pos.d8
+      ) {
+        valid.push('c8')
+      }
+    }
+  }
+}
   return { valid, blocked }
 }

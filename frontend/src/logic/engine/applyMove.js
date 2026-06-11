@@ -54,11 +54,20 @@ export function applyMove(sourceSquare, targetSquare, position, turn) {
     if (!((af === 1 && ar === 2) || (af === 2 && ar === 1))) return false
   }
   else if (type === 'K') {
+/* castling is handled as a special case in GameContext onpiecedrop,
+  so we validate it here byy allowing the king to move two dquares if all other conditions are meet
+ (castling rights, castling move,path clear, not moving out og check tec )*/
+  const castlingMove =
+    (sourceSquare === 'e1' && (targetSquare === 'g1' || targetSquare === 'c1')) ||
+    (sourceSquare === 'e8' && (targetSquare === 'g8' || targetSquare === 'c8'))
+
+  if (!castlingMove) {
     if (af > 1 || ar > 1) return false
   }
+}
 
   // All checks passed — build the new position
- const next = { ...position }
+const next = { ...position }
 
 next[targetSquare] = next[sourceSquare]
 delete next[sourceSquare]
@@ -73,11 +82,49 @@ if (
 ) {
   return false
 }
+
+/* White kingside */
+if (
+  sourceSquare === 'e1' &&
+  targetSquare === 'g1'
+) {
+  next.f1 = next.h1
+  delete next.h1
+}
+
+/* White queenside */
+if (
+  sourceSquare === 'e1' &&
+  targetSquare === 'c1'
+) {
+  next.d1 = next.a1
+  delete next.a1
+}
+
+/* Black kingside */
+if (
+  sourceSquare === 'e8' &&
+  targetSquare === 'g8'
+) {
+  next.f8 = next.h8
+  delete next.h8
+}
+
+/* Black queenside */
+if (
+  sourceSquare === 'e8' &&
+  targetSquare === 'c8'
+) {
+  next.d8 = next.a8
+  delete next.a8
+}
+
 console.log(
   'Legal move:',
   sourceSquare,
   '->',
   targetSquare
 )
+
 return next
 }
