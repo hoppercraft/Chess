@@ -10,13 +10,17 @@ const BOARD_SIZE = 480
 export default function ChessBoard({
   position,
   turn,
+  gameStatus,
   highlightSquares,
   onPieceDrop,
   onSquareClick,
 }) {
   return (
     <section className="board-section">
-      <GameStatus turn={turn} />
+      <GameStatus
+  turn={turn}
+  gameStatus={gameStatus}
+/>
       <div className="board-wrapper">
         <div style={{ width: BOARD_SIZE, height: BOARD_SIZE }}>
           <Chessboard

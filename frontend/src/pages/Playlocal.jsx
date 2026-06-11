@@ -9,7 +9,7 @@ import CapturedPieces from '../components/game/CapturedPieces.jsx'
 export default function PlayLocal() {
   const navigate = useNavigate()
   const {
-    turn, position, moveHistory, showHistory, setShowHistory,
+    turn, gameStatus,position, moveHistory, showHistory, setShowHistory,
     highlightSquares, capturedByWhite, capturedByBlack,
     onSquareClick, onPieceDrop, resetGame,
   } = useGame()
@@ -19,6 +19,7 @@ export default function PlayLocal() {
       <ChessBoard
         position={position}
         turn={turn}
+         gameStatus={gameStatus}
         highlightSquares={highlightSquares}
         onPieceDrop={onPieceDrop}
         onSquareClick={onSquareClick}

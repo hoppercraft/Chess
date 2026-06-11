@@ -30,61 +30,57 @@ export function GameProvider({ children }) {
     }
   }
 
-  function onPieceDrop({ sourceSquare, targetSquare }) {
-    const newPosition = applyMove(sourceSquare, targetSquare, position, turn)
-    if (!newPosition) return false
+function onPieceDrop({ sourceSquare, targetSquare }) {
 
-    const piece       = position[sourceSquare]
-    const type        = piece.pieceType[1]
-    const targetPiece = position[targetSquare]
-    const notation    = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
-
-    const lm = { from: sourceSquare, to: targetSquare }
-    setMoveHistory(prev => [...prev, notation])
-
-    if (targetPiece) {
-      if (turn === 'w') setCapturedByWhite(prev => [...prev, targetPiece.pieceType])
-      else              setCapturedByBlack(prev => [...prev, targetPiece.pieceType])
-    }
-
-    setLastMove(lm)
-    setHighlightSquares(buildHighlights(null, newPosition, lm))
-    setPosition(newPosition)
-    const nextTurn = turn === 'w' ? 'b' : 'w'
-    console.log(
-  'Check:',
-  isCheck(newPosition, nextTurn)
-)
-    if (
-  isCheckmate(
-    newPosition,
-    nextTurn
-  )
-) {
-  setGameStatus('checkmate')
-}
-else if (
-  isStalemate(
-    newPosition,
-    nextTurn
-  )
-) {
-  setGameStatus('stalemate')
-}
-else if (
-  isCheck(
-    newPosition,
-    nextTurn
-  )
-) {
-  setGameStatus('check')
-}
-else {
-  setGameStatus('playing')
-}
-    setTurn(nextTurn)
-    return true
+  if (
+    gameStatus === 'checkmate' ||
+    gameStatus === 'stalemate'
+  ) {
+    return false
   }
+
+  const newPosition = applyMove(sourceSquare, targetSquare, position, turn)
+  if (!newPosition) return false
+
+  const piece       = position[sourceSquare]
+  const type        = piece.pieceType[1]
+  const targetPiece = position[targetSquare]
+  const notation    = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
+
+  const lm = { from: sourceSquare, to: targetSquare }
+  setMoveHistory(prev => [...prev, notation])
+
+  if (targetPiece) {
+    if (turn === 'w') {
+      setCapturedByWhite(prev => [...prev, targetPiece.pieceType])
+    } else {
+      setCapturedByBlack(prev => [...prev, targetPiece.pieceType])
+    }
+  }
+
+  setLastMove(lm)
+  setHighlightSquares(buildHighlights(null, newPosition, lm))
+  setPosition(newPosition)
+
+  const nextTurn = turn === 'w' ? 'b' : 'w'
+
+  if (isCheckmate(newPosition, nextTurn)) {
+    setGameStatus('checkmate')
+  }
+  else if (isStalemate(newPosition, nextTurn)) {
+    setGameStatus('stalemate')
+  }
+  else if (isCheck(newPosition, nextTurn)) {
+    setGameStatus('check')
+  }
+  else {
+    setGameStatus('playing')
+  }
+
+  setTurn(nextTurn)
+
+  return true
+}
 
   function resetGame() {
   setPosition({ ...INITIAL_POSITION })
