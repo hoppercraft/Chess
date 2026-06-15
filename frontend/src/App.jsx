@@ -392,18 +392,24 @@ export default function App() {
           <section className="board-section">
             <div className="board-wrapper">
               <div style={{ width: 480, height: 480 }}>
-                <Chessboard options={{
-                  position,
-                  onPieceDrop,
-                  allowDragging: true,
-                  squareStyles: highlightSquares,
-                  onSquareClick,
-                }} />
+                <Chessboard 
+                  position={generateFen(position, turn, castle, lastMove, moveHistory)} // Uses a standard FEN string to render visually!
+                  onPieceDrop={onPieceDrop}
+                  arePiecesDraggable={true} // 'react-chessboard' uses arePiecesDraggable instead of allowDragging
+                  customSquareStyles={highlightSquares} // uses customSquareStyles instead of squareStyles
+                  onSquareClick={(square) => onSquareClick({ square })} // simplifies event routing
+                />
               </div>
             </div>
           </section>
 
           <aside className="side-panel">
+            <div className="info-row">
+            <span className="info-label">Current FEN</span>
+            <span className="info-value" style={{ fontSize: '11px', fontFamily: 'monospace' }}>
+              {generateFen(position, turn, castle, lastMove, moveHistory)}
+            </span>
+          </div>
           <div className="game-info">
             <div className="game-info-header">Game Info</div>
             <div className="game-info-body">
@@ -477,4 +483,73 @@ export default function App() {
       </main>
     </>
   )
+}
+
+function generateFen(position, turn, castle, lastMove, moveHistory) {
+  const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const fenRows = [];
+
+  // 1. Piece Placement Data
+  ranks.forEach(rank => {
+    let emptyCount = 0;
+    let rowStr = '';
+
+    files.forEach(file => {
+      const square = file + rank;
+      const piece = position[square];
+
+      if (piece) {
+        if (emptyCount > 0) {
+          rowStr += emptyCount;
+          emptyCount = 0;
+        }
+        // Transform 'wP' -> 'P', 'bP' -> 'p'
+        const color = piece.pieceType[0];
+        const type = piece.pieceType[1];
+        rowStr += color === 'w' ? type.toUpperCase() : type.toLowerCase();
+      } else {
+        emptyCount++;
+      }
+    });
+
+    if (emptyCount > 0) {
+      rowStr += emptyCount;
+    }
+    fenRows.push(rowStr);
+  });
+
+  const piecePlacement = fenRows.join('/');
+
+  // 2. Active Color
+  const activeColor = turn;
+
+  // 3. Castling Availability
+  let castlingStr = '';
+  if (!castle.wK && position.e1?.pieceType === 'wK' && position.h1?.pieceType === 'wR') castlingStr += 'K';
+  if (!castle.wQ && position.e1?.pieceType === 'wK' && position.a1?.pieceType === 'wR') castlingStr += 'Q';
+  if (!castle.bK && position.e8?.pieceType === 'bK' && position.h8?.pieceType === 'bR') castlingStr += 'k';
+  if (!castle.bQ && position.e8?.pieceType === 'bK' && position.a8?.pieceType === 'bR') castlingStr += 'q';
+  if (castlingStr === '') castlingStr = '-';
+
+  // 4. En Passant Target Square
+  let enPassant = '-';
+  if (lastMove) {
+    const fromPiece = position[lastMove.to];
+    if (fromPiece && fromPiece.pieceType[1] === 'P') {
+      const fromRank = parseInt(lastMove.from[1], 10);
+      const toRank = parseInt(lastMove.to[1], 10);
+      if (Math.abs(fromRank - toRank) === 2) {
+        // En passant target square is the square skipped over
+        const epRank = fromRank === 2 ? 3 : 6;
+        enPassant = lastMove.to[0] + epRank;
+      }
+    }
+  }
+
+  // 5 & 6. Clock Cycles (Approximated or simplified placeholders for local play)
+  const halfmoveClock = '0'; 
+  const fullmoveNumber = Math.floor(moveHistory.length / 2) + 1;
+
+  return `${piecePlacement} ${activeColor} ${castlingStr} ${enPassant} ${halfmoveClock} ${fullmoveNumber}`;
 }
