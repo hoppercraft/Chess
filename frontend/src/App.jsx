@@ -393,11 +393,11 @@ export default function App() {
             <div className="board-wrapper">
               <div style={{ width: 480, height: 480 }}>
                 <Chessboard 
-                  position={generateFen(position, turn, castle, lastMove, moveHistory)} // Uses a standard FEN string to render visually!
+                  position={generateFen(position, turn, castle, lastMove, moveHistory)} 
                   onPieceDrop={onPieceDrop}
-                  arePiecesDraggable={true} // 'react-chessboard' uses arePiecesDraggable instead of allowDragging
-                  customSquareStyles={highlightSquares} // uses customSquareStyles instead of squareStyles
-                  onSquareClick={(square) => onSquareClick({ square })} // simplifies event routing
+                  arePiecesDraggable={true} 
+                  customSquareStyles={highlightSquares} 
+                  onSquareClick={(square) => onSquareClick({ square })} 
                 />
               </div>
             </div>
