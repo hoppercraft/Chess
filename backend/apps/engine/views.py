@@ -1,7 +1,36 @@
+import random
+
+import chess
 from rest_framework              import status
 from rest_framework.decorators  import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response    import Response
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def random_move(request):
+    """
+    Return a random legal move for the given FEN position.
+    Body: { fen: str }
+    Returns: { move: "e2e4" } in UCI format
+    """
+    fen = request.data.get('fen', '')
+
+    if not fen:
+        return Response({'message': 'fen is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        board = chess.Board(fen)
+    except ValueError:
+        return Response({'message': 'Invalid FEN string.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    legal_moves = list(board.legal_moves)
+    if not legal_moves:
+        return Response({'move': None, 'note': 'No legal moves available (checkmate/stalemate).'})
+
+    move = random.choice(legal_moves)
+    return Response({'move': move.uci()})
 
 
 @api_view(['POST'])
