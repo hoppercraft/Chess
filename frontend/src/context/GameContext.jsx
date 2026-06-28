@@ -21,6 +21,25 @@ async function fetchRandomMove(fenString) {
   return data.move
 }
 
+async function fetchBestMove(fenString, level) {
+  // Map level to depth for minimax/alpha-beta
+  const depth = level === 1 ? 2 : level === 2 ? 3 : 4
+  try {
+    const res = await fetch(`${API_BASE}/engine/best-move/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fen: fenString, depth }),
+    })
+    const data = await res.json()
+    if (data && data.from && data.to) {
+      return `${data.from}${data.to}`
+    }
+  } catch (err) {
+    console.error("Error fetching best move:", err)
+  }
+  return null
+}
+
 function uciToMove(uci, position) {
   if (!uci || uci.length < 4) return null
   const from = uci.slice(0, 2)
@@ -30,9 +49,20 @@ function uciToMove(uci, position) {
   return { from, to, pieceType: piece.pieceType }
 }
 
-async function makeAIMove(currentPosition, currentTurn, setPosition, setTurn, setGameStatus, setMoveHistory, setLastMove, setHighlightSquares, setCapturedByWhite, setCapturedByBlack, castleRights, setCastleRights, setEnPassantSquare) {
+async function makeAIMove(currentPosition, currentTurn, level, setPosition, setTurn, setGameStatus, setMoveHistory, setLastMove, setHighlightSquares, setCapturedByWhite, setCapturedByBlack, castleRights, setCastleRights, setEnPassantSquare) {
   const fen = positionToFen(currentPosition, currentTurn, castleRights, null, 0, 1)
-  const uci = await fetchRandomMove(fen)
+  
+  let uci = null
+  if (level === 0) {
+    uci = await fetchRandomMove(fen)
+  } else {
+    uci = await fetchBestMove(fen, level)
+    if (!uci) {
+      // Fallback to random move if minimax/best_move is not fully implemented in backend yet
+      uci = await fetchRandomMove(fen)
+    }
+  }
+  
   if (!uci) return false
 
   const move = uciToMove(uci, currentPosition)
@@ -96,6 +126,8 @@ async function makeAIMove(currentPosition, currentTurn, setPosition, setTurn, se
 export function GameProvider({ children }) {
   const [turn,             setTurn]             = useState('w')
   const [gameStatus, setGameStatus] = useState('playing')
+  const [gameMode,         setGameMode]         = useState('local') // 'local' or 'engine'
+  const [level,            setLevel]            = useState(0) // 0: Random, 1: Minimax, 2: Alpha-Beta, 3: Master
 
   const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
  // console.log(position)
@@ -138,6 +170,11 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
 
   const newPosition = applyMove(sourceSquare, targetSquare, position, turn, enPassantSquare)
   if (!newPosition) return false
+
+  // Block player from moving Black's pieces when playing against the engine
+  if (gameMode === 'engine' && turn === 'b') {
+    return false
+  }
 
   const piece       = position[sourceSquare]
 
@@ -244,11 +281,12 @@ setCastleRights(rights)
 
   setTurn(nextTurn)
 
-  if (nextTurn === 'b' && gameStatus === 'playing') {
+  if (gameMode === 'engine' && nextTurn === 'b' && gameStatus === 'playing') {
     setTimeout(() => {
       makeAIMove(
         newPosition,
         'b',
+        level,
         setPosition,
         setTurn,
         setGameStatus,
@@ -295,20 +333,40 @@ function promotePawn(pieceType) {
       ? 'b'
       : 'w'
 
+  let statusAfterPromotion = 'playing'
   if (isCheckmate(next, nextTurn)) {
-    setGameStatus('checkmate')
+    statusAfterPromotion = 'checkmate'
   }
   else if (isStalemate(next, nextTurn)) {
-    setGameStatus('stalemate')
+    statusAfterPromotion = 'stalemate'
   }
   else if (isCheck(next, nextTurn)) {
-    setGameStatus('check')
-  }
-  else {
-    setGameStatus('playing')
+    statusAfterPromotion = 'check'
   }
 
+  setGameStatus(statusAfterPromotion)
   setTurn(nextTurn)
+
+  if (gameMode === 'engine' && nextTurn === 'b' && statusAfterPromotion === 'playing') {
+    setTimeout(() => {
+      makeAIMove(
+        next,
+        'b',
+        level,
+        setPosition,
+        setTurn,
+        setGameStatus,
+        setMoveHistory,
+        setLastMove,
+        setHighlightSquares,
+        setCapturedByWhite,
+        setCapturedByBlack,
+        castleRights,
+        setCastleRights,
+        setEnPassantSquare
+      )
+    }, 300)
+  }
 }
   function resetGame() {
   setPosition({ ...INITIAL_POSITION })
@@ -352,6 +410,11 @@ function promotePawn(pieceType) {
 
   promotionData,
   promotePawn,
+  
+  gameMode,
+  setGameMode,
+  level,
+  setLevel,
 }}>
       {children}
     </GameContext.Provider>

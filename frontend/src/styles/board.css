@@ -1195,12 +1195,12 @@ body {
   font-size: 48px;
   animation: crown-float 1.2s ease-in-out infinite;
 }
-.tion-overlay {
+.promotion-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.7);
   display: flex;
-  justify-content: center;promo
+  justify-content: center;
   align-items: center;
 }
 
@@ -1216,4 +1216,86 @@ body {
   margin: 8px 0;
   padding: 10px;
   cursor: pointer;
+}
+
+/* ── Engine level panel ────────────────────────────────────────────────────── */
+.engine-level-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+}
+
+.level-panel-header {
+  padding: 12px 16px;
+  background: linear-gradient(90deg, var(--wood-dark), var(--wood-mid));
+  border-bottom: 2px solid var(--panel-border);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--wood-pale);
+}
+
+.level-panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.level-panel-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.level-buttons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.level-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 100ms ease-out;
+  width: 100%;
+}
+
+.level-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--wood-light);
+}
+
+.level-btn.active {
+  background: rgba(250, 230, 208, 0.08);
+  border-color: var(--wood-light);
+  box-shadow: 0 0 8px rgba(200, 150, 90, 0.2);
+}
+
+.level-btn-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.level-btn.active .level-btn-title {
+  color: var(--wood-pale);
+}
+
+.level-btn-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--mono, Courier, monospace);
+  margin-top: 2px;
 }
