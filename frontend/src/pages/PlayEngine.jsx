@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext.jsx'
 import ChessBoard     from '../components/board/ChessBoard.jsx'
 import GameInfo       from '../components/game/GameInfo.jsx'
@@ -16,7 +15,6 @@ const LEVELS = [
 ]
 
 export default function PlayEngine() {
-  const navigate = useNavigate()
   const {
     turn, gameStatus, position, moveHistory, showHistory, setShowHistory,
     highlightSquares, capturedByWhite, capturedByBlack,
