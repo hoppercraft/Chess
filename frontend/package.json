@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "axion": "^0.1.0",
     "axios": "^1.17.0",
     "chess.js": "^1.4.0",
     "jwt-decode": "^4.0.0",

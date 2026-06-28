@@ -53,7 +53,7 @@ export default function Dashboard() {
             </div>
             <span className="dash-card-arrow">→</span>
           </button>
-
+          {/*
           <button className="dash-card dash-card--disabled" disabled>
             <span className="dash-card-icon">🤖</span>
             <div className="dash-card-body">
@@ -62,7 +62,7 @@ export default function Dashboard() {
             </div>
             <span className="dash-card-badge">Soon</span>
           </button>
-
+          
           <button className="dash-card dash-card--disabled" disabled>
             <span className="dash-card-icon">🌐</span>
             <div className="dash-card-body">
@@ -71,7 +71,7 @@ export default function Dashboard() {
             </div>
             <span className="dash-card-badge">Soon</span>
           </button>
-
+          */}
           {user && (
             <button className="dash-card dash-card--secondary" onClick={() => navigate('/profile')}>
               <span className="dash-card-icon">👤</span>
