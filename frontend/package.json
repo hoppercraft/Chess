@@ -11,6 +11,7 @@
     "dev:all": "concurrently \"cd ../backend && python manage.py runserver\" \"npm run dev\""
   },
   "dependencies": {
+    "axion": "^0.1.0",
     "axios": "^1.17.0",
     "chess.js": "^1.4.0",
     "jwt-decode": "^4.0.0",
