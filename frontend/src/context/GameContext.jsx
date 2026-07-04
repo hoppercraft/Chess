@@ -1,21 +1,144 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useRef, useEffect } from 'react'
 import { INITIAL_POSITION, PIECE_SYMBOLS } from '../utils/constants.js'
 import { applyMove }       from '../logic/engine/applyMove.js'
 import { buildHighlights } from '../logic/engine/gameState.js'
 import { isCheck } from '../logic/validation/isCheck.js'
 import { isCheckmate } from '../logic/validation/isCheckmate.js'
 import { isStalemate } from '../logic/validation/isStalemate.js'
+import { positionToFen } from '../logic/board/fenConverter.js'
+
+const API_BASE = 'http://localhost:8000/api'
+
 const GameContext = createContext(null)
+
+async function fetchRandomMove(fenString) {
+  const res = await fetch(`${API_BASE}/engine/random-move/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fen: fenString }),
+  })
+  const data = await res.json()
+  return data.move
+}
+
+async function fetchBestMove(fenString, level) {
+  // Map level to depth for minimax/alpha-beta
+  const depth = level === 1 ? 2 : level === 2 ? 3 : 4
+  try {
+    const res = await fetch(`${API_BASE}/engine/best-move/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fen: fenString, depth }),
+    })
+    const data = await res.json()
+    if (data && data.from && data.to) {
+      return `${data.from}${data.to}`
+    }
+  } catch (err) {
+    console.error("Error fetching best move:", err)
+  }
+  return null
+}
+
+function uciToMove(uci, position) {
+  if (!uci || uci.length < 4) return null
+  const from = uci.slice(0, 2)
+  const to = uci.slice(2, 4)
+  const piece = position[from]
+  if (!piece) return null
+  return { from, to, pieceType: piece.pieceType }
+}
+
+async function makeAIMove(currentPosition, currentTurn, level, setPosition, setTurn, setGameStatus, setMoveHistory, setLastMove, setHighlightSquares, setCapturedByWhite, setCapturedByBlack, castleRights, setCastleRights, setEnPassantSquare) {
+  const fen = positionToFen(currentPosition, currentTurn, castleRights, null, 0, 1)
+  
+  let uci
+  if (level === 0) {
+    uci = await fetchRandomMove(fen)
+  } else {
+    uci = await fetchBestMove(fen, level)
+    if (!uci) {
+      // Fallback to random move if minimax/best_move is not fully implemented in backend yet
+      uci = await fetchRandomMove(fen)
+    }
+  }
+  
+  if (!uci) return false
+
+  const move = uciToMove(uci, currentPosition)
+  if (!move) return false
+
+  const newPosition = applyMove(move.from, move.to, currentPosition, currentTurn, null)
+  if (!newPosition) return false
+
+  const piece = currentPosition[move.from]
+  const targetPiece = currentPosition[move.to]
+
+  const type = piece.pieceType[1]
+  const notation = `${PIECE_SYMBOLS[type] || ''}${move.from}${targetPiece ? 'x' : '→'}${move.to}`
+
+  const lm = { from: move.from, to: move.to }
+  setMoveHistory(prev => [...prev, notation])
+
+  if (targetPiece) {
+    if (currentTurn === 'w') {
+      setCapturedByWhite(prev => [...prev, targetPiece.pieceType])
+    } else {
+      setCapturedByBlack(prev => [...prev, targetPiece.pieceType])
+    }
+  }
+
+  setLastMove(lm)
+  setHighlightSquares(buildHighlights(null, newPosition, lm, castleRights, null))
+  setPosition(newPosition)
+
+  const nextTurn = currentTurn === 'w' ? 'b' : 'w'
+
+  if (isCheckmate(newPosition, nextTurn)) {
+    setGameStatus('checkmate')
+  } else if (isStalemate(newPosition, nextTurn)) {
+    setGameStatus('stalemate')
+  } else if (isCheck(newPosition, nextTurn)) {
+    setGameStatus('check')
+  } else {
+    setGameStatus('playing')
+  }
+
+  setTurn(nextTurn)
+
+  // Update castling rights for AI move
+  const rights = { ...castleRights }
+  if (move.from === 'e1') rights.wKingMoved = true
+  if (move.from === 'e8') rights.bKingMoved = true
+  if (move.from === 'a1') rights.wLeftRookMoved = true
+  if (move.from === 'h1') rights.wRightRookMoved = true
+  if (move.from === 'a8') rights.bLeftRookMoved = true
+  if (move.from === 'h8') rights.bRightRookMoved = true
+  setCastleRights(rights)
+
+  setEnPassantSquare(null)
+
+  return true
+}
 
 
 
 export function GameProvider({ children }) {
   const [turn,             setTurn]             = useState('w')
   const [gameStatus, setGameStatus] = useState('playing')
+  const [gameMode,         setGameMode]         = useState('local')
+  const [level,            setLevel]            = useState(0)
 
   const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
- // console.log(position)
- const [castleRights, setCastleRights] = useState({
+  const [boardOrientation, setBoardOrientation] = useState('white')
+  const [autoFlip,         setAutoFlip]         = useState(false)
+  const [showFlipPrompt,   setShowFlipPrompt]   = useState(false)
+  const autoFlipRef = useRef(autoFlip)
+  useEffect(() => { 
+    autoFlipRef.current = autoFlip
+    console.log('AUTOFLIP REF UPDATED:', autoFlip)
+  }, [autoFlip])
+  const [castleRights, setCastleRights] = useState({
   wKingMoved: false,
   bKingMoved: false,
 
@@ -24,7 +147,7 @@ export function GameProvider({ children }) {
 
   bLeftRookMoved: false,
   bRightRookMoved: false,
-})
+  })
   const [enPassantSquare, setEnPassantSquare] = useState(null)
   const [moveHistory,      setMoveHistory]      = useState([])
   const [promotionData, setPromotionData] = useState(null)
@@ -55,78 +178,44 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
   const newPosition = applyMove(sourceSquare, targetSquare, position, turn, enPassantSquare)
   if (!newPosition) return false
 
-  const piece       = position[sourceSquare]
-
-  // handle promotion target square setting and promotion piece selection trigger
-
-const promotionRank =
-  piece.pieceType[0] === 'w'
-    ? '8'
-    : '1'
-
-if (
-  piece.pieceType[1] === 'P' &&
-  targetSquare[1] === promotionRank
-) {
-  setPromotionData({
-    sourceSquare,
-    targetSquare,
-    color: piece.pieceType[0],
-  })
-
-  return false
-}
-
-
-  // handle en passanr target square setting a pawn double move 
-  // and reset after every move if not a double pawn move
-
-
-  if (piece.pieceType[1] === 'P') {
-
-  const startRank = Number(sourceSquare[1])
-  const endRank = Number(targetSquare[1])
-
-  if (Math.abs(endRank - startRank) === 2) {
-
-    const middleRank =
-      (startRank + endRank) / 2
-
-    setEnPassantSquare(
-      sourceSquare[0] + middleRank
-    )
-
-  } else {
-
-    setEnPassantSquare(null)
-
+  if (gameMode === 'engine' && turn === 'b') {
+    return false
   }
 
-} else {
+  const piece       = position[sourceSquare]
 
-  setEnPassantSquare(null)
+  const promotionRank = piece.pieceType[0] === 'w' ? '8' : '1'
 
-}
+  if (piece.pieceType[1] === 'P' && targetSquare[1] === promotionRank) {
+    setPromotionData({ sourceSquare, targetSquare, color: piece.pieceType[0] })
+    return false
+  }
 
-   // castling rights update after every move from or to the relevant squares 
+  if (piece.pieceType[1] === 'P') {
+    const startRank = Number(sourceSquare[1])
+    const endRank = Number(targetSquare[1])
+    if (Math.abs(endRank - startRank) === 2) {
+      const middleRank = (startRank + endRank) / 2
+      setEnPassantSquare(sourceSquare[0] + middleRank)
+    } else {
+      setEnPassantSquare(null)
+    }
+  } else {
+    setEnPassantSquare(null)
+  }
+
   const rights = { ...castleRights }
+  if (sourceSquare === 'e1') rights.wKingMoved = true
+  if (sourceSquare === 'e8') rights.bKingMoved = true
+  if (sourceSquare === 'a1') rights.wLeftRookMoved = true
+  if (sourceSquare === 'h1') rights.wRightRookMoved = true
+  if (sourceSquare === 'a8') rights.bLeftRookMoved = true
+  if (sourceSquare === 'h8') rights.bRightRookMoved = true
+  setCastleRights(rights)
 
-if (sourceSquare === 'e1') rights.wKingMoved = true
-if (sourceSquare === 'e8') rights.bKingMoved = true
-
-if (sourceSquare === 'a1') rights.wLeftRookMoved = true
-if (sourceSquare === 'h1') rights.wRightRookMoved = true
-
-if (sourceSquare === 'a8') rights.bLeftRookMoved = true
-if (sourceSquare === 'h8') rights.bRightRookMoved = true
-
-setCastleRights(rights)
-
-
-
-  const type        = piece.pieceType[1]
+  const type = piece.pieceType[1]
   const targetPiece = position[targetSquare]
-  const notation    = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
+  const notation = `${PIECE_SYMBOLS[type] || ''}${sourceSquare}${targetPiece ? 'x' : '→'}${targetSquare}`
 
   const lm = { from: sourceSquare, to: targetSquare }
   setMoveHistory(prev => [...prev, notation])
@@ -140,25 +229,46 @@ setCastleRights(rights)
   }
 
   setLastMove(lm)
-  setHighlightSquares(buildHighlights(null, newPosition, lm, castleRights,enPassantSquare))
+  setHighlightSquares(buildHighlights(null, newPosition, lm, rights, enPassantSquare))
   setPosition(newPosition)
 
   const nextTurn = turn === 'w' ? 'b' : 'w'
 
+  let newGameStatus = 'playing'
   if (isCheckmate(newPosition, nextTurn)) {
-    setGameStatus('checkmate')
+    newGameStatus = 'checkmate'
+  } else if (isStalemate(newPosition, nextTurn)) {
+    newGameStatus = 'stalemate'
+  } else if (isCheck(newPosition, nextTurn)) {
+    newGameStatus = 'check'
   }
-  else if (isStalemate(newPosition, nextTurn)) {
-    setGameStatus('stalemate')
-  }
-  else if (isCheck(newPosition, nextTurn)) {
-    setGameStatus('check')
-  }
-  else {
-    setGameStatus('playing')
+  setGameStatus(newGameStatus)
+  setTurn(nextTurn)
+
+  if (gameMode === 'local' && autoFlipRef.current) {
+    setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
   }
 
-  setTurn(nextTurn)
+  if (gameMode === 'engine' && nextTurn === 'b' && newGameStatus === 'playing') {
+    setTimeout(() => {
+      makeAIMove(
+        newPosition,
+        'b',
+        level,
+        setPosition,
+        setTurn,
+        setGameStatus,
+        setMoveHistory,
+        setLastMove,
+        setHighlightSquares,
+        setCapturedByWhite,
+        setCapturedByBlack,
+        rights,
+        setCastleRights,
+        setEnPassantSquare
+      )
+    }, 300)
+  }
 
   return true
 }
@@ -168,11 +278,7 @@ function promotePawn(pieceType) {
 
   if (!promotionData) return
 
-  const {
-    sourceSquare,
-    targetSquare,
-    color,
-  } = promotionData
+  const { sourceSquare, targetSquare, color } = promotionData
 
   const next = { ...position }
 
@@ -186,27 +292,46 @@ function promotePawn(pieceType) {
 
   setPromotionData(null)
 
-  const nextTurn =
-    turn === 'w'
-      ? 'b'
-      : 'w'
+  const nextTurn = turn === 'w' ? 'b' : 'w'
 
+  let statusAfterPromotion = 'playing'
   if (isCheckmate(next, nextTurn)) {
-    setGameStatus('checkmate')
-  }
-  else if (isStalemate(next, nextTurn)) {
-    setGameStatus('stalemate')
-  }
-  else if (isCheck(next, nextTurn)) {
-    setGameStatus('check')
-  }
-  else {
-    setGameStatus('playing')
+    statusAfterPromotion = 'checkmate'
+  } else if (isStalemate(next, nextTurn)) {
+    statusAfterPromotion = 'stalemate'
+  } else if (isCheck(next, nextTurn)) {
+    statusAfterPromotion = 'check'
   }
 
+  setGameStatus(statusAfterPromotion)
   setTurn(nextTurn)
+
+  if (gameMode === 'local' && autoFlipRef.current) {
+    setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
+  }
+
+  if (gameMode === 'engine' && nextTurn === 'b' && statusAfterPromotion === 'playing') {
+    setTimeout(() => {
+      makeAIMove(
+        next,
+        'b',
+        level,
+        setPosition,
+        setTurn,
+        setGameStatus,
+        setMoveHistory,
+        setLastMove,
+        setHighlightSquares,
+        setCapturedByWhite,
+        setCapturedByBlack,
+        castleRights,
+        setCastleRights,
+        setEnPassantSquare
+      )
+    }, 300)
+  }
 }
-  function resetGame() {
+function resetGame(mode) {
   setPosition({ ...INITIAL_POSITION })
   setTurn('w')
   setGameStatus('playing')
@@ -216,19 +341,28 @@ function promotePawn(pieceType) {
   setCapturedByWhite([])
   setCapturedByBlack([])
   setShowHistory(false)
-// reset castling rights to initial state on game reset 
+  setBoardOrientation('white')
   setCastleRights({
-  wKingMoved: false,
-  bKingMoved: false,
+    wKingMoved: false,
+    bKingMoved: false,
+    wLeftRookMoved: false,
+    wRightRookMoved: false,
+    bLeftRookMoved: false,
+    bRightRookMoved: false,
+  })
+  setEnPassantSquare(null)
 
-  wLeftRookMoved: false,
-  wRightRookMoved: false,
+  if (mode === 'local') {
+    setShowFlipPrompt(true)
+  } else {
+    setShowFlipPrompt(false)
+  }
+}
 
-  bLeftRookMoved: false,
-  bRightRookMoved: false,
-})
-
-
+function setAutoFlipEnabled(enabled) {
+  console.log('setAutoFlipEnabled called:', enabled)
+  setAutoFlip(enabled)
+  setShowFlipPrompt(false)
 }
 
   return (
@@ -245,9 +379,16 @@ function promotePawn(pieceType) {
   onSquareClick,
   onPieceDrop,
   resetGame,
-
   promotionData,
   promotePawn,
+  gameMode,
+  setGameMode,
+  level,
+  setLevel,
+  boardOrientation,
+  autoFlip,
+  showFlipPrompt,
+  setAutoFlipEnabled,
 }}>
       {children}
     </GameContext.Provider>

@@ -5,9 +5,9 @@
 export default function Navbar({ onBack }) {
   return (
     <header className="chess-header">
-      <span className="crown-icon">♚</span>
+      <span className="crown-icon"></span>
       <h1>Chess</h1>
-      <span className="crown-icon">♔</span>
+      <span className="crown-icon"></span>
       {onBack && (
         <button className="nav-back-btn" onClick={onBack}>
           ← Dashboard
