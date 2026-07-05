@@ -247,7 +247,7 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
     setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
   }
 
-  if (gameMode === 'engine' && nextTurn === 'b' && newGameStatus === 'playing') {
+  if (gameMode === 'engine' && nextTurn === 'b' && newGameStatus !== 'checkmate' && newGameStatus !== 'stalemate') {
     setTimeout(() => {
       makeAIMove(
         newPosition,
@@ -308,7 +308,7 @@ function promotePawn(pieceType) {
     setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
   }
 
-  if (gameMode === 'engine' && nextTurn === 'b' && statusAfterPromotion === 'playing') {
+  if (gameMode === 'engine' && nextTurn === 'b' && statusAfterPromotion !== 'checkmate' && statusAfterPromotion !== 'stalemate') {
     setTimeout(() => {
       makeAIMove(
         next,
