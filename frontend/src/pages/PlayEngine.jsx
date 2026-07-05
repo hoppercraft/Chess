@@ -9,9 +9,9 @@ import PromotionModal from '../components/game/PromotionModal.jsx'
 
 const LEVELS = [
   { val: 0, title: "Level 0 — Random", desc: "plays legal moves at random" },
-  { val: 1, title: "Level 1 — Minimax", desc: "minimax search depth 2" },
-  { val: 2, title: "Level 2 — Pruning", desc: "alpha-beta search depth 3" },
-  { val: 3, title: "Level 3 — Master", desc: "optimized search depth 4" }
+  { val: 1, title: "Level 1 — Minimax", desc: "minimax search depth 1" },
+  { val: 2, title: "Level 2 — Pruning", desc: "alpha-beta search depth 2" },
+  { val: 3, title: "Level 3 — Master", desc: "optimized search depth 3" }
 ]
 
 export default function PlayEngine() {

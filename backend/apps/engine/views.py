@@ -6,6 +6,8 @@ from rest_framework.decorators  import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response    import Response
 
+from apps.engine.ai.minimax import select_engine_move
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -64,7 +66,7 @@ def best_move(request):
     Body: { fen: str, depth: int (optional, default 3) }
     Returns: { from: str, to: str, score: float }
 
-    NOTE: Stub — returns null until the minimax/alpha-beta module is complete.
+    Maps frontend level to depth: Level 1=depth 1, Level 2=depth 2, Level 3=depth 3, Level 4=depth 4
     """
     fen   = request.data.get('fen', '')
     depth = request.data.get('depth', 3)
@@ -72,5 +74,26 @@ def best_move(request):
     if not fen:
         return Response({'message': 'fen is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # TODO: wire up apps/engine/ai/minimax.py here
-    return Response({'from': None, 'to': None, 'score': None, 'note': 'Engine not yet implemented.'})
+    try:
+        board = chess.Board(fen)
+    except ValueError:
+        return Response({'message': 'Invalid FEN string.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Map depth to level (frontend sends depth: 1=2, 2=3, 3=4, 4=4)
+    # But our minimax uses level directly, so map depth back to level
+    depth_to_level = {1: 1, 2: 2, 3: 3, 4: 4}
+    level = depth_to_level.get(depth, 3)
+
+    move = select_engine_move(board, level)
+    if not move:
+        legal = list(board.legal_moves)
+        if not legal:
+            return Response({'from': None, 'to': None, 'score': 0, 'note': 'No legal moves'})
+        move = random.choice(legal)
+
+    uci = move.uci()
+    return Response({
+        'from': uci[:2],
+        'to': uci[2:4],
+        'score': 0,
+    })
