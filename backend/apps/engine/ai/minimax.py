@@ -98,13 +98,27 @@ def get_pst_value(piece_type: int, square: int, color: bool, endgame: bool) -> i
         return KING_PST_EG[idx]
     return table[idx]
 
-def is_endgame(board: chess.Board) -> bool:
-    white_queen = board.pieces(chess.QUEEN, chess.WHITE)
-    black_queen = board.pieces(chess.QUEEN, chess.BLACK)
+def is_endgame(piece_map: dict[int, chess.Piece]) -> bool:
+    white_queen = False
+    black_queen = False
+    white_material = 0
+    black_material = 0
+
+    for piece in piece_map.values():
+        if piece.piece_type == chess.QUEEN:
+            if piece.color == chess.WHITE:
+                white_queen = True
+            else:
+                black_queen = True
+        elif piece.piece_type in (chess.ROOK, chess.BISHOP, chess.KNIGHT):
+            if piece.color == chess.WHITE:
+                white_material += MATERIAL_VALUES[piece.piece_type]
+            else:
+                black_material += MATERIAL_VALUES[piece.piece_type]
+
     if not white_queen and not black_queen:
         return True
-    white_material = sum(len(board.pieces(pt, chess.WHITE)) * MATERIAL_VALUES[pt] for pt in [chess.ROOK, chess.BISHOP, chess.KNIGHT])
-    black_material = sum(len(board.pieces(pt, chess.BLACK)) * MATERIAL_VALUES[pt] for pt in [chess.ROOK, chess.BISHOP, chess.KNIGHT])
+
     return (white_material + black_material) < 1300
 
 def evaluate_board(board: chess.Board, level: int) -> int:
@@ -114,19 +128,18 @@ def evaluate_board(board: chess.Board, level: int) -> int:
         return 0
 
     score = 0
-    endgame = is_endgame(board)
+    piece_map = board.piece_map()
+    endgame = is_endgame(piece_map)
 
-    for square in chess.SQUARES:
-        piece = board.piece_at(square)
-        if piece:
-            value = MATERIAL_VALUES[piece.piece_type]
-            pst_bonus = 0
-            if level >= 2:
-                pst_bonus = get_pst_value(piece.piece_type, square, piece.color, endgame)
-            if piece.color == chess.WHITE:
-                score += value + pst_bonus
-            else:
-                score -= value + pst_bonus
+    for square, piece in piece_map.items():
+        value = MATERIAL_VALUES[piece.piece_type]
+        pst_bonus = 0
+        if level >= 2:
+            pst_bonus = get_pst_value(piece.piece_type, square, piece.color, endgame)
+        if piece.color == chess.WHITE:
+            score += value + pst_bonus
+        else:
+            score -= value + pst_bonus
 
     if level >= 3:
         for color in [chess.WHITE, chess.BLACK]:

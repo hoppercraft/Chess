@@ -22,13 +22,11 @@ async function fetchRandomMove(fenString) {
 }
 
 async function fetchBestMove(fenString, level) {
-  // Map level to depth for minimax/alpha-beta
-  const depth = level === 1 ? 2 : level === 2 ? 3 : 4
   try {
     const res = await fetch(`${API_BASE}/engine/best-move/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fen: fenString, depth }),
+      body: JSON.stringify({ fen: fenString, depth: level }),
     })
     const data = await res.json()
     if (data && data.from && data.to) {
