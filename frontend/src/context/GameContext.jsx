@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useRef, useEffect } from 'react'
 import { INITIAL_POSITION, PIECE_SYMBOLS } from '../utils/constants.js'
-import { applyMove }       from '../logic/engine/applyMove.js'
+import { makeAIMove } from '../logic/engine/aiEngine.js'
 import { buildHighlights } from '../logic/engine/gameState.js'
 import { isCheck } from '../logic/validation/isCheck.js'
 import { isCheckmate } from '../logic/validation/isCheckmate.js'
 import { isStalemate } from '../logic/validation/isStalemate.js'
 import { positionToFen } from '../logic/board/fenConverter.js'
+import { applyMove } from '../logic/engine/applyMove.js'
 
 const API_BASE = 'http://localhost:8000/api'
 
@@ -47,9 +48,9 @@ function uciToMove(uci, position) {
   return { from, to, pieceType: piece.pieceType }
 }
 
-async function makeAIMove(currentPosition, currentTurn, level, setPosition, setTurn, setGameStatus, setMoveHistory, setLastMove, setHighlightSquares, setCapturedByWhite, setCapturedByBlack, castleRights, setCastleRights, setEnPassantSquare) {
+async function makeAIMoveOLD(currentPosition, currentTurn, level, setPosition, setTurn, setGameStatus, setMoveHistory, setLastMove, setHighlightSquares, setCapturedByWhite, setCapturedByBlack, castleRights, setCastleRights, setEnPassantSquare) {
   const fen = positionToFen(currentPosition, currentTurn, castleRights, null, 0, 1)
-  
+
   let uci
   if (level === 0) {
     uci = await fetchRandomMove(fen)
@@ -60,7 +61,7 @@ async function makeAIMove(currentPosition, currentTurn, level, setPosition, setT
       uci = await fetchRandomMove(fen)
     }
   }
-  
+
   if (!uci) return false
 
   const move = uciToMove(uci, currentPosition)
@@ -127,6 +128,53 @@ export function GameProvider({ children }) {
   const [gameMode,         setGameMode]         = useState('local')
   const [level,            setLevel]            = useState(0)
 
+
+// ---------------- Timer ----------------
+
+const [timeControl, setTimeControl] = useState({
+  initial: null,
+  increment: 0,
+})
+
+const [whiteTime, setWhiteTime] = useState(null)
+const [blackTime, setBlackTime] = useState(null)
+
+const [timerRunning, setTimerRunning] = useState(false)
+// Whose clock is currently counting
+const [activeTimer, setActiveTimer] = useState('w')
+
+// Keep the active clock in sync with whose turn it actually is
+useEffect(() => {
+  setActiveTimer(turn)
+}, [turn])
+
+// The actual countdown loop
+useEffect(() => {
+  if (!timerRunning) return
+  if (timeControl.initial === null) return // unlimited time control, nothing to tick
+  if (gameStatus === 'checkmate' || gameStatus === 'stalemate' || gameStatus === 'timeout') return
+
+  const interval = setInterval(() => {
+    const setTime = activeTimer === 'w' ? setWhiteTime : setBlackTime
+
+    setTime(prev => {
+      if (prev === null) return prev
+      if (prev <= 1) {
+        clearInterval(interval)
+        setTimerRunning(false)
+        setGameStatus('timeout')
+        return 0
+      }
+      return prev - 1
+    })
+  }, 1000)
+
+  return () => clearInterval(interval)
+}, [timerRunning, activeTimer, gameStatus, timeControl.initial])
+
+//..............
+
+
   const [position,         setPosition]         = useState(() => ({ ...INITIAL_POSITION }))
   const [boardOrientation, setBoardOrientation] = useState('white')
   const [autoFlip,         setAutoFlip]         = useState(false)
@@ -168,7 +216,8 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
 
   if (
     gameStatus === 'checkmate' ||
-    gameStatus === 'stalemate'
+    gameStatus === 'stalemate' ||
+    gameStatus === 'timeout'
   ) {
     return false
   }
@@ -243,6 +292,15 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
   setGameStatus(newGameStatus)
   setTurn(nextTurn)
 
+  // Apply increment to the player who just moved, before the clock switches sides
+  if (timeControl.initial !== null && timeControl.increment) {
+    if (turn === 'w') {
+      setWhiteTime(prev => (prev === null ? prev : prev + timeControl.increment))
+    } else {
+      setBlackTime(prev => (prev === null ? prev : prev + timeControl.increment))
+    }
+  }
+
   if (gameMode === 'local' && autoFlipRef.current) {
     setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
   }
@@ -304,6 +362,15 @@ function promotePawn(pieceType) {
   setGameStatus(statusAfterPromotion)
   setTurn(nextTurn)
 
+  // Apply increment on promotion moves too
+  if (timeControl.initial !== null && timeControl.increment) {
+    if (turn === 'w') {
+      setWhiteTime(prev => (prev === null ? prev : prev + timeControl.increment))
+    } else {
+      setBlackTime(prev => (prev === null ? prev : prev + timeControl.increment))
+    }
+  }
+
   if (gameMode === 'local' && autoFlipRef.current) {
     setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')
   }
@@ -355,12 +422,26 @@ function resetGame(mode) {
   } else {
     setShowFlipPrompt(false)
   }
+
+  setTimerRunning(false)
+  setWhiteTime(timeControl.initial)
+  setBlackTime(timeControl.initial)
+  setActiveTimer('w')
 }
 
-function setAutoFlipEnabled(enabled) {
-  console.log('setAutoFlipEnabled called:', enabled)
-  setAutoFlip(enabled)
+function startLocalGame(settings) {
+
+  setAutoFlip(settings.autoFlip)
+  setTimeControl(settings.timeControl)
+
+  setWhiteTime(settings.timeControl.initial)
+  setBlackTime(settings.timeControl.initial)
+  setActiveTimer('w')
+
   setShowFlipPrompt(false)
+
+  // Start the countdown, unless this is an unlimited-time game
+  setTimerRunning(settings.timeControl.initial !== null)
 }
 
   return (
@@ -386,7 +467,21 @@ function setAutoFlipEnabled(enabled) {
   boardOrientation,
   autoFlip,
   showFlipPrompt,
-  setAutoFlipEnabled,
+  startLocalGame,
+  timeControl,
+setTimeControl,
+
+whiteTime,
+setWhiteTime,
+
+blackTime,
+setBlackTime,
+
+timerRunning,
+setTimerRunning,
+
+activeTimer,
+setActiveTimer,
 }}>
       {children}
     </GameContext.Provider>
