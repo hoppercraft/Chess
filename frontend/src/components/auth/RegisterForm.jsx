@@ -8,6 +8,7 @@ export default function RegisterForm() {
   const [username, setUsername] = useState('')
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
+  const [password2, setPassword2] = useState('')
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
 
@@ -16,10 +17,20 @@ export default function RegisterForm() {
     setError('')
     setLoading(true)
     try {
-      await register(username, email, password)
+      await register(username, email, password, password2)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed.')
+      const data = err.response?.data
+      const firstFieldError = data && typeof data === 'object'
+        ? Object.values(data).flat().find(Boolean)
+        : null
+      setError(
+        data?.message
+        || data?.password
+        || data?.non_field_errors?.[0]
+        || firstFieldError
+        || 'Registration failed.'
+      )
     } finally {
       setLoading(false)
     }
@@ -59,6 +70,15 @@ export default function RegisterForm() {
             placeholder="••••••••"
             value={password}
             onChange={e => setPassword(e.target.value)}
+          />
+        </div>
+        <div className="auth-field">
+          <label>Confirm Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password2}
+            onChange={e => setPassword2(e.target.value)}
           />
         </div>
         <button className="auth-btn" onClick={handleSubmit} disabled={loading}>

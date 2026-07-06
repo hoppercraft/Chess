@@ -27,8 +27,8 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  async function register(username, email, password) {
-    const data = await authApi.register(username, email, password)
+  async function register(username, email, password, password2) {
+    const data = await authApi.register(username, email, password, password2)
     localStorage.setItem('chess_token', data.token)
     localStorage.setItem('chess_refresh', data.refresh)
     setUser(data.user)
