@@ -1427,3 +1427,37 @@ body {
   border-color: var(--wood-light);
   color: var(--wood-pale);
 }
+/* ================= TIMER ================= */
+
+.game-timer{
+    width:140px;
+    padding:12px 18px;
+
+    background:#1d1d1d;
+
+    border:2px solid #5c3317;
+
+    border-radius:8px;
+
+    color:#f5f5f5;
+
+    font-size:30px;
+
+    font-weight:700;
+
+    text-align:center;
+
+    letter-spacing:2px;
+
+    transition:.25s;
+}
+
+.game-timer.danger{
+    background:#8b1d1d;
+    border-color:#ff4444;
+    color:white;
+}
+
+.game-timer.unlimited{
+    font-size:28px;
+}

@@ -7,14 +7,14 @@ import MoveHistory    from '../components/game/MoveHistory.jsx'
 import CapturedPieces from '../components/game/CapturedPieces.jsx'
 import PromotionModal from '../components/game/PromotionModal.jsx'
 import LocalSetupModal from '../components/board/LocalSetupModal.jsx'
-
+import Timer from "../components/game/Timer.jsx";
 
 export default function PlayLocal() {
   const {
     turn, gameStatus, position, moveHistory, showHistory, setShowHistory,
     highlightSquares, capturedByWhite, capturedByBlack,
     onSquareClick, onPieceDrop, resetGame, promotionData, promotePawn,
-    setGameMode, showFlipPrompt, setAutoFlipEnabled,
+    setGameMode, showFlipPrompt, startLocalGame,
   } = useGame()
 
   useEffect(() => {
@@ -35,10 +35,12 @@ export default function PlayLocal() {
 
       <aside className="side-panel">
         <GameInfo turn={turn} moveCount={moveHistory.length} />
-        <CapturedPieces
-          capturedByWhite={capturedByWhite}
-          capturedByBlack={capturedByBlack}
-        />
+        <Timer />
+
+         <CapturedPieces
+         capturedByWhite={capturedByWhite}
+         capturedByBlack={capturedByBlack}
+         />
         <GameControls
           showHistory={showHistory}
           onToggleHistory={() => setShowHistory(p => !p)}
@@ -47,7 +49,7 @@ export default function PlayLocal() {
         {showHistory && <MoveHistory moveHistory={moveHistory} />}
       </aside>
       {promotionData && ( <PromotionModal color={promotionData.color} onSelect={promotePawn} /> )}
-      {showFlipPrompt && <LocalSetupModal onSelect={setAutoFlipEnabled} />}
+      {showFlipPrompt && <LocalSetupModal onSelect={startLocalGame} />}
     </main>
   )
 }
