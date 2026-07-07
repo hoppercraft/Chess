@@ -8,7 +8,7 @@ import Login      from './pages/Login.jsx'
 import Register   from './pages/Register.jsx'
 import Profile    from './pages/Profile.jsx'
 import NotFound   from './pages/NotFound.jsx'
-
+import ScrollToTop from './components/common/ScrollToTop.jsx'
 export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -18,6 +18,7 @@ export default function App() {
   return (
     <>
       <Navbar onBack={showBack ? () => navigate(-1) : undefined} />
+      <ScrollToTop />
       <Routes>
         <Route path="/"           element={<Dashboard />} />
         <Route path="/play/local" element={<PlayLocal />} />

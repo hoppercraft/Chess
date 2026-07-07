@@ -709,6 +709,12 @@ body {
 
 /* ── Navbar back button ────────────────────────────────────────────────────── */
 
+.chess-header h1 img.crown-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  margin-right: 0.3em;
+}
 
 .nav-back-btn {
   position: absolute;
