@@ -31,6 +31,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     games_lost = models.PositiveIntegerField(default=0)
     games_drawn = models.PositiveIntegerField(default=0)
 
+    rating = models.IntegerField(default=1200)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
@@ -42,7 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
-rating = models.IntegerField(default=1200)
+
 # =========================
 # GAME MODEL (SEPARATE)
 # =========================

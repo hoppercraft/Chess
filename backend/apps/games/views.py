@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -5,7 +6,7 @@ from rest_framework.response import Response
 
 from .models import Game
 from .serializers import GameSerializer, SaveGameSerializer
-from .services import GameService
+from .services import save_game
 
 
 # =========================
@@ -19,7 +20,7 @@ def create_game(request):
     serializer = SaveGameSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    game = GameService.save_game(serializer.validated_data)
+    game = save_game(request.user, serializer.validated_data)
 
     return Response(
         GameSerializer(game).data,
@@ -33,10 +34,10 @@ def create_game(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_games(request):
-    """Return authenticated user's game history."""
+    """Return authenticated user's game history (as either color)."""
 
     games = Game.objects.filter(
-        white_player=request.user
+        Q(white_player=request.user) | Q(black_player=request.user)
     ).select_related(
         'white_player',
         'black_player',
@@ -44,7 +45,7 @@ def my_games(request):
     ).order_by('-created_at')
 
     return Response({
-        'games': GameSerializer(games, many=True).data
+        'games': GameSerializer(games, many=True, context={'request': request}).data
     })
 
 
@@ -54,14 +55,17 @@ def my_games(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def game_detail(request, pk):
-    """Fetch a single game by id."""
+    """Fetch a single game by id (must be a participant)."""
 
     try:
         game = Game.objects.select_related(
             'white_player',
             'black_player',
             'winner'
-        ).get(pk=pk, white_player=request.user)
+        ).get(
+            Q(white_player=request.user) | Q(black_player=request.user),
+            pk=pk,
+        )
 
     except Game.DoesNotExist:
         return Response(
@@ -69,4 +73,4 @@ def game_detail(request, pk):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    return Response(GameSerializer(game).data)
+    return Response(GameSerializer(game, context={'request': request}).data)

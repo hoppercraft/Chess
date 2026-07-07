@@ -8,6 +8,11 @@ from apps.games.models import User
 # =========================
 class SaveGameSerializer(serializers.ModelSerializer):
 
+    # white_player is always the authenticated request user (set in the
+    # view/service layer), never something the client gets to choose --
+    # otherwise a client could attribute a saved game to any other account.
+    white_player = serializers.PrimaryKeyRelatedField(read_only=True, required=False)
+
     class Meta:
         model = Game
         fields = (
@@ -28,9 +33,6 @@ class SaveGameSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not data.get("white_player"):
-            raise serializers.ValidationError("White player is required")
-
         if data.get("mode") == "ONLINE" and not data.get("black_player"):
             raise serializers.ValidationError("Online games require black player")
 

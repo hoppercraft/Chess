@@ -5,13 +5,13 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        const token = localStorage.getItem("chess_token");
+
         const res = await axios.get(
-          "http://localhost:8000/api/accounts/me/",
+          "http://localhost:8000/api/auth/me/",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -19,12 +19,9 @@ export default function Profile() {
           }
         );
 
-        // backend returns { user: {...} }
         setProfile(res.data.user);
       } catch (err) {
         console.log("Profile fetch failed:", err);
-
-        // fallback so UI doesn't break
         setProfile(null);
       } finally {
         setLoading(false);
@@ -32,7 +29,7 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, [token]);
+  }, []);
 
   if (loading) {
     return (
@@ -46,7 +43,7 @@ export default function Profile() {
     return (
       <div className="profile-wrapper">
         <div style={{ color: "#ef4444" }}>
-          Failed to load profile. Backend not running or token invalid.
+          Failed to load profile.
         </div>
       </div>
     );
@@ -54,12 +51,9 @@ export default function Profile() {
 
   return (
     <div className="profile-wrapper">
-
       <div className="profile-container">
 
-        {/* LEFT */}
         <div className="profile-left">
-
           <div className="avatar-circle">
             {profile.username?.[0]?.toUpperCase()}
           </div>
@@ -71,13 +65,11 @@ export default function Profile() {
           <div className="rating-block">
             <div className="rating-label">Rating</div>
             <div className="rating">
-              {profile.rating ?? 1200}
+              {profile.rating}
             </div>
           </div>
-
         </div>
 
-        {/* RIGHT */}
         <div className="profile-right">
 
           <h3 className="section-title">Statistics</h3>
@@ -95,8 +87,11 @@ export default function Profile() {
               <div className="stat-label">Win Rate</div>
               <div className="stat-value">
                 {profile.games_played
-                  ? Math.round((profile.games_won / profile.games_played) * 100)
-                  : 0}%
+                  ? Math.round(
+                      (profile.games_won / profile.games_played) * 100
+                    )
+                  : 0}
+                %
               </div>
             </div>
 
@@ -116,9 +111,7 @@ export default function Profile() {
             </div>
 
           </div>
-
         </div>
-
       </div>
     </div>
   );
