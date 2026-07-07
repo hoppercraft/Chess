@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import './styles/board.css'
 import Navbar     from './components/common/Navbar.jsx'
 import Dashboard  from './pages/Dashboard.jsx'
@@ -10,9 +10,14 @@ import Profile    from './pages/Profile.jsx'
 import NotFound   from './pages/NotFound.jsx'
 
 export default function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const showBack = location.pathname !== '/'
+
   return (
     <>
-      <Navbar />
+      <Navbar onBack={showBack ? () => navigate(-1) : undefined} />
       <Routes>
         <Route path="/"           element={<Dashboard />} />
         <Route path="/play/local" element={<PlayLocal />} />

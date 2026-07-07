@@ -75,6 +75,7 @@ body {
 
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .chess-header {
+  position: relative; 
   width: 100%;
   padding: 18px 32px;
   background: linear-gradient(180deg, var(--wood-dark) 0%, var(--panel-bg) 100%);
@@ -707,24 +708,33 @@ body {
 }
 
 /* ── Navbar back button ────────────────────────────────────────────────────── */
+
+
 .nav-back-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   background: none;
   border: 1px solid var(--panel-border);
-  border-radius: var(--radius-sm);
+  border-radius: 0; /* full-height button looks better without rounded corners */
   color: var(--text-secondary);
   font-family: 'Georgia', serif;
   font-size: 13px;
-  padding: 6px 14px;
+  padding: 0 14px;
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
-  margin-left: 20px;
 }
 
 .nav-back-btn:hover {
   border-color: var(--wood-light);
   color: var(--wood-pale);
 }
-
 /* ── Dashboard responsive ──────────────────────────────────────────────────── */
 @media (max-width: 700px) {
   .dash-hero {
@@ -1461,3 +1471,4 @@ body {
 .game-timer.unlimited{
     font-size:28px;
 }
+
