@@ -1,29 +1,102 @@
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import User
+from .models import Game
+from apps.games.models import User
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password  = serializers.CharField(write_only=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, label='Confirm password')
+# =========================
+# SAVE GAME (frontend → backend)
+# =========================
+class SaveGameSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model  = User
-        fields = ('username', 'email', 'password', 'password2')
+        model = Game
+        fields = (
+            "white_player",
+            "black_player",
+            "winner",
+            "mode",
+            "status",
+            "termination",
+            "moves",
+            "move_count",
+            "initial_fen",
+            "final_fen",
+            "time_control",
+            "increment",
+            "white_time_remaining",
+            "black_time_remaining",
+        )
 
     def validate(self, data):
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
+        if not data.get("white_player"):
+            raise serializers.ValidationError("White player is required")
+
+        if data.get("mode") == "ONLINE" and not data.get("black_player"):
+            raise serializers.ValidationError("Online games require black player")
+
+        if not data.get("moves"):
+            raise serializers.ValidationError("Game must contain moves")
+
         return data
 
-    def create(self, validated_data):
-        validated_data.pop('password2')
-        return User.objects.create_user(**validated_data)
 
+# =========================
+# FULL GAME DETAIL (replay / view)
+# =========================
+class GameSerializer(serializers.ModelSerializer):
 
-class UserSerializer(serializers.ModelSerializer):
+    white_player = serializers.StringRelatedField()
+    black_player = serializers.StringRelatedField()
+    winner = serializers.StringRelatedField()
+
     class Meta:
-        model  = User
-        fields = ('id', 'username', 'email', 'games_played', 'games_won',
-                  'games_lost', 'games_drawn', 'created_at')
-        read_only_fields = fields
+        model = Game
+        fields = (
+            "id",
+            "white_player",
+            "black_player",
+            "winner",
+            "mode",
+            "status",
+            "termination",
+            "moves",
+            "move_count",
+            "initial_fen",
+            "final_fen",
+            "time_control",
+            "increment",
+            "white_time_remaining",
+            "black_time_remaining",
+            "created_at",
+            "finished_at",
+        )
+
+
+# =========================
+# GAME LIST (profile/history page)
+# =========================
+class GameListSerializer(serializers.ModelSerializer):
+
+    opponent = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Game
+        fields = (
+            "id",
+            "opponent",
+            "mode",
+            "status",
+            "winner",
+            "created_at",
+        )
+
+    def get_opponent(self, obj):
+        request = self.context.get("request")
+
+        if not request:
+            return "Unknown"
+
+        if obj.white_player == request.user:
+            return obj.black_player.username if obj.black_player else "AI"
+
+        return obj.white_player.username

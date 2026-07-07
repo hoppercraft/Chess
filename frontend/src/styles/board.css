@@ -1461,3 +1461,142 @@ body {
 .game-timer.unlimited{
     font-size:28px;
 }
+/* ===== FULL PAGE ===== */
+.profile-wrapper {
+  min-height: 100vh;
+  background: #0f1117;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  font-family: system-ui, sans-serif;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.profile-container {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  gap: 30px;
+  background: #151a22;
+  border-radius: 16px;
+  padding: 30px;
+  border: 1px solid #232a36;
+}
+
+/* ===== LEFT PANEL ===== */
+.profile-left {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 1px solid #232a36;
+  padding-right: 20px;
+}
+
+/* ===== AVATAR ===== */
+.avatar-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #facc15, #f97316);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: bold;
+  color: #111;
+}
+
+/* ===== TEXT ===== */
+.username {
+  margin-top: 12px;
+  font-size: 22px;
+  color: white;
+}
+
+.subtext {
+  color: #9aa4b2;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+/* ===== RATING ===== */
+.rating-block {
+  background: #0f141c;
+  width: 100%;
+  text-align: center;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #232a36;
+  margin-bottom: 20px;
+}
+
+.rating-label {
+  color: #9aa4b2;
+  font-size: 12px;
+}
+
+.rating {
+  font-size: 34px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+/* ===== BIO ===== */
+.bio-box {
+  background: #0f141c;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #232a36;
+  color: #cbd5e1;
+  font-size: 13px;
+  width: 100%;
+}
+
+/* ===== RIGHT PANEL ===== */
+.profile-right {
+  width: 65%;
+}
+
+.section-title {
+  color: white;
+  margin-bottom: 15px;
+}
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.stat-card {
+  background: #0f141c;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid #232a36;
+  transition: 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: #2b3444;
+}
+
+.stat-label {
+  color: #9aa4b2;
+  font-size: 12px;
+}
+
+.stat-value {
+  font-size: 20px;
+  color: white;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* ===== COLORS ===== */
+.win { border-left: 3px solid #22c55e; }
+.loss { border-left: 3px solid #ef4444; }
+.draw { border-left: 3px solid #3b82f6; }

@@ -103,3 +103,98 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+.navbar {
+  height: 60px;
+  background: #0f1117;
+  border-bottom: 1px solid #232a36;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  font-family: system-ui, sans-serif;
+}
+
+/* LEFT */
+.logo {
+  color: #facc15;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+/* CENTER LINKS */
+.nav-center {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-link {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.nav-link:hover {
+  color: white;
+}
+
+/* RIGHT */
+.nav-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* BUTTONS */
+.nav-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #2b3444;
+  background: transparent;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.nav-btn:hover {
+  background: #1f2937;
+}
+
+/* PRIMARY */
+.nav-btn.primary {
+  background: #facc15;
+  color: #111;
+  border: none;
+}
+
+.nav-btn.primary:hover {
+  background: #eab308;
+}
+
+/* DANGER */
+.nav-btn.danger {
+  background: #ef4444;
+  border: none;
+}
+
+.nav-btn.danger:hover {
+  background: #dc2626;
+}
+
+/* BACK BUTTON */
+.back-btn {
+  padding: 6px 10px;
+  background: #1f2937;
+  border: 1px solid #2b3444;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.back-btn:hover {
+  background: #111827;
+}

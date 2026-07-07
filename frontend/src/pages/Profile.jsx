@@ -1,75 +1,125 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '../context/AuthContext.jsx'
-import { gameApi } from '../api/gameApi.js'
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function Profile() {
-  const { user, logout } = useAuth()
-  const [games,   setGames]   = useState([])
-  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    gameApi.getMyGames()
-      .then(data => setGames(data.games || []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:8000/api/accounts/me/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-  const wins   = games.filter(g => g.result === 'win').length
-  const losses = games.filter(g => g.result === 'loss').length
-  const draws  = games.filter(g => g.result === 'draw').length
+        // backend returns { user: {...} }
+        setProfile(res.data.user);
+      } catch (err) {
+        console.log("Profile fetch failed:", err);
+
+        // fallback so UI doesn't break
+        setProfile(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="profile-wrapper">
+        <div style={{ color: "white" }}>Loading profile...</div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="profile-wrapper">
+        <div style={{ color: "#ef4444" }}>
+          Failed to load profile. Backend not running or token invalid.
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="profile-page">
-      <div className="profile-card">
-        <div className="profile-avatar">♚</div>
-        <h2 className="profile-name">{user?.username}</h2>
-        <p className="profile-email">{user?.email}</p>
+    <div className="profile-wrapper">
 
-        <div className="profile-stats">
-          <div className="stat-item">
-            <span className="stat-value">{wins}</span>
-            <span className="stat-label">Wins</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{losses}</span>
-            <span className="stat-label">Losses</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{draws}</span>
-            <span className="stat-label">Draws</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{games.length}</span>
-            <span className="stat-label">Total</span>
-          </div>
-        </div>
+      <div className="profile-container">
 
-        <div className="profile-history">
-          <div className="profile-history-header">Recent Games</div>
-          {loading ? (
-            <div className="profile-loading">Loading…</div>
-          ) : games.length === 0 ? (
-            <div className="profile-empty">No games recorded yet. Play some games!</div>
-          ) : (
-            <div className="profile-games-list">
-              {games.slice(0, 10).map(g => (
-                <div className="profile-game-row" key={g.id}>
-                  <span className={`game-result-badge result-${g.result}`}>
-                    {g.result?.toUpperCase()}
-                  </span>
-                  <span className="game-mode">{g.mode}</span>
-                  <span className="game-moves">{g.total_moves} moves</span>
-                  <span className="game-date">
-                    {new Date(g.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
+        {/* LEFT */}
+        <div className="profile-left">
+
+          <div className="avatar-circle">
+            {profile.username?.[0]?.toUpperCase()}
+          </div>
+
+          <h2 className="username">{profile.username}</h2>
+
+          <p className="subtext">{profile.email}</p>
+
+          <div className="rating-block">
+            <div className="rating-label">Rating</div>
+            <div className="rating">
+              {profile.rating ?? 1200}
             </div>
-          )}
+          </div>
+
         </div>
 
-        <button className="btn-logout" onClick={logout}>Sign Out</button>
+        {/* RIGHT */}
+        <div className="profile-right">
+
+          <h3 className="section-title">Statistics</h3>
+
+          <div className="stats-grid">
+
+            <div className="stat-card">
+              <div className="stat-label">Games Played</div>
+              <div className="stat-value">
+                {profile.games_played}
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-label">Win Rate</div>
+              <div className="stat-value">
+                {profile.games_played
+                  ? Math.round((profile.games_won / profile.games_played) * 100)
+                  : 0}%
+              </div>
+            </div>
+
+            <div className="stat-card win">
+              <div className="stat-label">Wins</div>
+              <div className="stat-value">{profile.games_won}</div>
+            </div>
+
+            <div className="stat-card loss">
+              <div className="stat-label">Losses</div>
+              <div className="stat-value">{profile.games_lost}</div>
+            </div>
+
+            <div className="stat-card draw">
+              <div className="stat-label">Draws</div>
+              <div className="stat-value">{profile.games_drawn}</div>
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
     </div>
-  )
+  );
 }
