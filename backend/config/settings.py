@@ -102,7 +102,14 @@ SIMPLE_JWT = {
 }
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+#----CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+CORS_ALLOWED_ORIGINS = [
+    origin for origin in config(
+        "CORS_ALLOWED_ORIGINS",
+        default=""
+    ).split(",")
+    if origin
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # ── Static / Media ─────────────────────────────────────────────────────────────
