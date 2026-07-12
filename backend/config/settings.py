@@ -10,6 +10,8 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
 
 # ── Apps ──────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
+    'daphne', 
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -28,6 +30,7 @@ INSTALLED_APPS = [
     'apps.engine',
 ]
 
+ASGI_APPLICATION = 'config.asgi.application'
 # ── Middleware ─────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',          # must be first
@@ -117,3 +120,12 @@ TIME_ZONE     = 'UTC'
 USE_I18N      = True
 USE_TZ        = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
