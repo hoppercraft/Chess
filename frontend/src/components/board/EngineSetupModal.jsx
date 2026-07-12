@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaClock, FaInfinity, FaRotate, FaLock, FaChessBoard, FaPlay } from "react-icons/fa6";
+import { FaClock, FaInfinity, FaDice, FaBrain, FaChessKnight, FaCrown, FaPlay, FaRobot } from "react-icons/fa6";
 
 const TIME_OPTIONS = [
   { label: "Unlimited", sublabel: "No clock", value: null, icon: FaInfinity },
@@ -13,8 +13,15 @@ const TIME_OPTIONS = [
 // Seconds added to a player's clock after each move they make.
 const INCREMENT_OPTIONS = [0, 1, 2, 3, 5, 10, 15, 30];
 
-export default function LocalSetupModal({ onSelect }) {
-  const [autoFlip, setAutoFlip] = useState(true);
+const LEVELS = [
+  { val: 0, label: "Random", desc: "Plays legal moves at random", icon: FaDice },
+  { val: 1, label: "Minimax", desc: "Minimax search, depth 1", icon: FaBrain },
+  { val: 2, label: "Pruning", desc: "Alpha-beta search, depth 2", icon: FaChessKnight },
+  { val: 3, label: "Master", desc: "Optimized search, depth 3", icon: FaCrown },
+];
+
+export default function EngineSetupModal({ onSelect }) {
+  const [level, setLevel] = useState(1);
   const [timeControl, setTimeControl] = useState(600); // seconds, matches TIME_OPTIONS.value
   const [increment, setIncrement] = useState(0); // seconds added per move, matches INCREMENT_OPTIONS
 
@@ -25,11 +32,35 @@ export default function LocalSetupModal({ onSelect }) {
       <div className="local-setup-modal">
 
         <div className="local-setup-header">
-          <span className="local-setup-icon"><FaChessBoard /></span>
-          <h2>Local Game Setup</h2>
+          <span className="local-setup-icon"><FaRobot /></span>
+          <h2>Play vs Computer</h2>
           <p className="local-setup-subtitle">
             Configure your match before starting.
           </p>
+        </div>
+
+        <div className="setup-section">
+          <h3>Difficulty</h3>
+
+          <div className="difficulty-options">
+            {LEVELS.map(lvl => {
+              const Icon = lvl.icon;
+              return (
+                <button
+                  key={lvl.val}
+                  className={`difficulty-option ${level === lvl.val ? "selected" : ""}`}
+                  onClick={() => setLevel(lvl.val)}
+                  type="button"
+                >
+                  <Icon className="difficulty-option-icon" />
+                  <span className="difficulty-option-text">
+                    <span className="difficulty-option-label">{lvl.label}</span>
+                    <span className="difficulty-option-desc">{lvl.desc}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="setup-section">
@@ -80,37 +111,11 @@ export default function LocalSetupModal({ onSelect }) {
           )}
         </div>
 
-        <div className="setup-section">
-          <h3>Board Orientation</h3>
-
-          <div className="flip-options">
-            <button
-              className={`flip-option ${autoFlip ? "selected" : ""}`}
-              onClick={() => setAutoFlip(true)}
-              type="button"
-            >
-              <FaRotate className="flip-option-icon" />
-              <span className="flip-option-label">Auto Flip</span>
-              <span className="flip-option-desc">Board turns to face the player on move</span>
-            </button>
-
-            <button
-              className={`flip-option ${!autoFlip ? "selected" : ""}`}
-              onClick={() => setAutoFlip(false)}
-              type="button"
-            >
-              <FaLock className="flip-option-icon" />
-              <span className="flip-option-label">Static</span>
-              <span className="flip-option-desc">Board stays fixed with white at the bottom</span>
-            </button>
-          </div>
-        </div>
-
         <button
           className="start-game-btn"
           onClick={() =>
             onSelect({
-              autoFlip,
+              level,
               timeControl: {
                 initial: timeControl,
                 increment: isUnlimited ? 0 : increment,

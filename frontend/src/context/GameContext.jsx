@@ -7,6 +7,8 @@ import { isCheckmate } from '../logic/validation/isCheckmate.js'
 import { isStalemate } from '../logic/validation/isStalemate.js'
 import { positionToFen } from '../logic/board/fenConverter.js'
 import { applyMove } from '../logic/engine/applyMove.js'
+import { gameApi } from '../api/gameApi.js'
+import { useAuth } from './AuthContext.jsx'
 
 const API_BASE = 'http://localhost:8000/api'
 
@@ -123,6 +125,7 @@ async function makeAIMoveOLD(currentPosition, currentTurn, level, setPosition, s
 
 
 export function GameProvider({ children }) {
+  const { user } = useAuth()
   const [turn,             setTurn]             = useState('w')
   const [gameStatus, setGameStatus] = useState('playing')
   const [gameMode,         setGameMode]         = useState('local')
@@ -179,6 +182,7 @@ useEffect(() => {
   const [boardOrientation, setBoardOrientation] = useState('white')
   const [autoFlip,         setAutoFlip]         = useState(false)
   const [showFlipPrompt,   setShowFlipPrompt]   = useState(false)
+  const [showEnginePrompt, setShowEnginePrompt] = useState(false)
   const autoFlipRef = useRef(autoFlip)
   useEffect(() => { 
     autoFlipRef.current = autoFlip
@@ -202,6 +206,68 @@ useEffect(() => {
   const [lastMove,         setLastMove]         = useState(null)
   const [capturedByWhite,  setCapturedByWhite]  = useState([])
   const [capturedByBlack,  setCapturedByBlack]  = useState([])
+  const gameSavedRef = useRef(false) // guards against saving the same finished game twice
+
+  // ---------------- Toast (save feedback) ----------------
+  const [toast, setToast] = useState(null) // { message, type: 'success' | 'error' }
+  const toastTimeoutRef = useRef(null)
+
+  function showToast(message, type = 'success') {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToast({ message, type })
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 3000)
+  }
+
+  function dismissToast() {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToast(null)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [])
+
+  // Persist the game once it reaches a terminal state, for signed-in users.
+  // Local and engine games only — the human player is assumed to be White in
+  // both modes (local pass-and-play has no per-side login yet, and vs-engine
+  // always seats the human as White), so results are recorded from White's
+  // perspective. Revisit this once local games support picking your color.
+  useEffect(() => {
+    const isTerminal = gameStatus === 'checkmate' || gameStatus === 'stalemate' || gameStatus === 'timeout'
+    if (!isTerminal) return
+    if (!user) return
+    if (gameMode !== 'local' && gameMode !== 'engine') return
+    if (gameSavedRef.current) return
+
+    let result, termination
+    if (gameStatus === 'stalemate') {
+      result = 'draw'
+      termination = 'stalemate'
+    } else {
+      const loserColor = gameStatus === 'timeout' ? activeTimer : turn
+      result = loserColor === 'w' ? 'loss' : 'win'
+      termination = gameStatus === 'timeout' ? 'timeout' : 'checkmate'
+    }
+
+    gameSavedRef.current = true
+
+    gameApi.saveGame({
+      mode: gameMode,
+      result,
+      termination,
+      engine_level: gameMode === 'engine' ? level : null,
+      time_control_initial: timeControl.initial,
+      time_control_increment: timeControl.increment,
+      moves: moveHistory,
+    }).then(() => {
+      showToast('Game saved', 'success')
+    }).catch(() => {
+      // Non-fatal: keep playing even if the save fails (offline, server down, etc.)
+      showToast('Save failed', 'error')
+    })
+  }, [gameStatus, user, gameMode, activeTimer, turn, level, timeControl, moveHistory])
 
   function onSquareClick({ square }) {
     const piece = position[square]
@@ -397,6 +463,8 @@ function promotePawn(pieceType) {
   }
 }
 function resetGame(mode) {
+  gameSavedRef.current = false
+  dismissToast()
   setPosition({ ...INITIAL_POSITION })
   setTurn('w')
   setGameStatus('playing')
@@ -423,6 +491,12 @@ function resetGame(mode) {
     setShowFlipPrompt(false)
   }
 
+  if (mode === 'engine') {
+    setShowEnginePrompt(true)
+  } else {
+    setShowEnginePrompt(false)
+  }
+
   setTimerRunning(false)
   setWhiteTime(timeControl.initial)
   setBlackTime(timeControl.initial)
@@ -439,6 +513,21 @@ function startLocalGame(settings) {
   setActiveTimer('w')
 
   setShowFlipPrompt(false)
+
+  // Start the countdown, unless this is an unlimited-time game
+  setTimerRunning(settings.timeControl.initial !== null)
+}
+
+function startEngineGame(settings) {
+
+  setLevel(settings.level)
+  setTimeControl(settings.timeControl)
+
+  setWhiteTime(settings.timeControl.initial)
+  setBlackTime(settings.timeControl.initial)
+  setActiveTimer('w')
+
+  setShowEnginePrompt(false)
 
   // Start the countdown, unless this is an unlimited-time game
   setTimerRunning(settings.timeControl.initial !== null)
@@ -468,6 +557,8 @@ function startLocalGame(settings) {
   autoFlip,
   showFlipPrompt,
   startLocalGame,
+  showEnginePrompt,
+  startEngineGame,
   timeControl,
 setTimeControl,
 
@@ -482,6 +573,9 @@ setTimerRunning,
 
 activeTimer,
 setActiveTimer,
+
+toast,
+dismissToast,
 }}>
       {children}
     </GameContext.Provider>

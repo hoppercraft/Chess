@@ -14,6 +14,7 @@
     "axion": "^0.1.0",
     "axios": "^1.17.0",
     "chess.js": "^1.4.0",
+    "framer-motion": "^12.42.2",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.5",
     "react-chessboard": "^5.10.0",
