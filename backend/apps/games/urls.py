@@ -3,8 +3,8 @@ from . import views, consumers
 
 urlpatterns = [
     path("", views.create_game, name="game-create"),
-    path("my", views.my_games, name="game-my"),
-    path("<int:pk>", views.game_detail, name="game-detail"),
+    path("my/", views.my_games, name="game-my"),
+    path("<int:pk>/", views.game_detail, name="game-detail"),
 ]
 
 websocket_urlpatterns = [

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext.jsx'
 import ChessBoard     from '../components/board/ChessBoard.jsx'
 import GameInfo       from '../components/game/GameInfo.jsx'
@@ -6,6 +7,10 @@ import GameControls   from '../components/game/GameControls.jsx'
 import MoveHistory    from '../components/game/MoveHistory.jsx'
 import CapturedPieces from '../components/game/CapturedPieces.jsx'
 import PromotionModal from '../components/game/PromotionModal.jsx'
+import GameOverModal  from '../components/game/GameOverModal.jsx'
+import EngineSetupModal from '../components/board/EngineSetupModal.jsx'
+import Timer from '../components/game/Timer.jsx'
+import Toast from '../components/common/Toast.jsx'
 
 const LEVELS = [
   { val: 0, title: "Level 0 — Random", desc: "plays legal moves at random" },
@@ -15,16 +20,18 @@ const LEVELS = [
 ]
 
 export default function PlayEngine() {
+  const navigate = useNavigate()
   const {
     turn, gameStatus, position, moveHistory, showHistory, setShowHistory,
     highlightSquares, capturedByWhite, capturedByBlack,
     onSquareClick, onPieceDrop, resetGame, promotionData, promotePawn,
-    setGameMode, level, setLevel
+    setGameMode, level, setLevel, showEnginePrompt, startEngineGame, activeTimer,
+    toast, dismissToast,
   } = useGame()
 
   useEffect(() => {
     setGameMode('engine')
-    resetGame()
+    resetGame('engine')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -40,7 +47,8 @@ export default function PlayEngine() {
 
       <aside className="side-panel">
         <GameInfo turn={turn} moveCount={moveHistory.length} />
-        
+        <Timer />
+
         {/* Typographic Level Selector */}
         <div className="engine-level-panel">
           <div className="level-panel-header">Engine Configuration</div>
@@ -69,7 +77,7 @@ export default function PlayEngine() {
         <GameControls
           showHistory={showHistory}
           onToggleHistory={() => setShowHistory(p => !p)}
-          onNewGame={resetGame}
+          onNewGame={() => resetGame('engine')}
         />
         
         {showHistory && <MoveHistory moveHistory={moveHistory} />}
@@ -78,6 +86,15 @@ export default function PlayEngine() {
       {promotionData && (
         <PromotionModal color={promotionData.color} onSelect={promotePawn} />
       )}
+      {showEnginePrompt && <EngineSetupModal onSelect={startEngineGame} />}
+      <GameOverModal
+        gameStatus={gameStatus}
+        turn={turn}
+        activeTimer={activeTimer}
+        onNewGame={() => resetGame('engine')}
+        onGoDashboard={() => navigate('/')}
+      />
+      <Toast toast={toast} onDismiss={dismissToast} />
     </main>
   )
 }
