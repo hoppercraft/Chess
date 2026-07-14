@@ -64,12 +64,12 @@ export default function Dashboard() {
             <span className="dash-card-arrow">→</span>
           </button>
 
-          <button className="dash-card dash-card--disabled" disabled>
+          <button className="dash-card dash-card--primary" onClick={() => navigate('/play/online')}>
             <div className="dash-card-body">
               <span className="dash-card-title">Online Multiplayer</span>
-              <span className="dash-card-subtext">coming soon</span>
+              <span className="dash-card-subtext">play against a friend in real time</span>
             </div>
-            <span className="dash-card-badge">Soon</span>
+            <span className="dash-card-arrow">→</span>
           </button>
 
           {user && (
