@@ -42,3 +42,32 @@ export function positionToFen(position, turn, castleRights, enPassantSquare, hal
 
   return fen
 }
+
+
+export function fenToPosition(fen) {
+  const placement = fen.split(' ')[0]
+  const rows = placement.split('/')
+  const position = {}
+
+  const pieceMap = {
+    p: 'P', n: 'N', b: 'B', r: 'R', q: 'Q', k: 'K',
+  }
+
+  rows.forEach((row, rankIndex) => {
+    const rank = 8 - rankIndex
+    let file = 0
+    for (const char of row) {
+      if (/\d/.test(char)) {
+        file += Number(char)
+      } else {
+        const color = char === char.toUpperCase() ? 'w' : 'b'
+        const type = pieceMap[char.toLowerCase()]
+        const square = String.fromCharCode(97 + file) + rank
+        position[square] = { pieceType: color + type }
+        file += 1
+      }
+    }
+  })
+
+  return position
+}

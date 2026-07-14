@@ -42,3 +42,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
+    
+
+import uuid
+
+def generate_room_code():
+    return uuid.uuid4().hex[:8]
+
+class OnlineGame(models.Model):
+    room_code = models.CharField(max_length=8, unique=True, default=generate_room_code)
+    white_player = models.ForeignKey(User, related_name='games_as_white', on_delete=models.CASCADE, null=True, blank=True)
+    black_player = models.ForeignKey(User, related_name='games_as_black', on_delete=models.CASCADE, null=True, blank=True)
+    fen = models.CharField(max_length=100, default='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    status = models.CharField(max_length=20, default='waiting')  # waiting, active, finished
+    winner = models.CharField(max_length=10, null=True, blank=True)  # 'white', 'black', 'draw'
+    created_at = models.DateTimeField(auto_now_add=True)
