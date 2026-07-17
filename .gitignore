@@ -9,4 +9,5 @@ backend/.env
 backend/venv/
 backend/env
 __pycache__/
-*.pyck
+*.pyc
+backend/db.sqlite3
