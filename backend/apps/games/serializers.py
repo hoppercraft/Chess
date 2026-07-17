@@ -1,29 +1,32 @@
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import User
+
+from .models import Game
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password  = serializers.CharField(write_only=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, label='Confirm password')
+class GameSerializer(serializers.ModelSerializer):
+    """Read-only representation of a saved game, used for history/detail views."""
 
     class Meta:
-        model  = User
-        fields = ('username', 'email', 'password', 'password2')
+        model = Game
+        fields = (
+            'id', 'mode', 'result', 'termination', 'engine_level',
+            'time_control_initial', 'time_control_increment',
+            'moves', 'total_moves', 'created_at',
+        )
+        read_only_fields = fields
+
+
+class SaveGameSerializer(serializers.ModelSerializer):
+    """Write serializer used when a finished game is posted from the client."""
+
+    class Meta:
+        model = Game
+        fields = (
+            'mode', 'result', 'termination', 'engine_level',
+            'time_control_initial', 'time_control_increment', 'moves',
+        )
 
     def validate(self, data):
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
+        if data.get('mode') == 'engine' and data.get('engine_level') is None:
+            raise serializers.ValidationError({'engine_level': 'Required for engine games.'})
         return data
-
-    def create(self, validated_data):
-        validated_data.pop('password2')
-        return User.objects.create_user(**validated_data)
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model  = User
-        fields = ('id', 'username', 'email', 'games_played', 'games_won',
-                  'games_lost', 'games_drawn', 'created_at')
-        read_only_fields = fields
