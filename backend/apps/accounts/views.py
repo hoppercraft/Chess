@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response    import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.games.models import User
+from apps.accounts.models import User
 
 from .serializers import RegisterSerializer, UserSerializer
 

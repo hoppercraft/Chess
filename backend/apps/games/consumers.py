@@ -1,4 +1,5 @@
 import json
+import random
 
 import chess
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -32,6 +33,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         subprotocols = self.scope.get("subprotocols", [])
         accepted = subprotocols[0] if subprotocols else None
         await self.accept(subprotocol=accepted)
+
+        await self.send(text_data=json.dumps({"type": "assigned_color", "color": self.color}))
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -93,7 +96,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if board.is_checkmate():
             status = "finished"
-            winner = "white" if turn_color == "black" else "black"
+            winner = turn_color
 
         elif (
             board.is_stalemate()
@@ -139,9 +142,18 @@ class GameConsumer(AsyncWebsocketConsumer):
         if game.black_player_id == self.user.id:
             return "black"
 
+        if game.white_player_id is None and game.black_player_id is None:
+            if random.choice([True, False]):
+                game.white_player = self.user
+            else:
+                game.black_player = self.user
+            game.status = "waiting"
+            game.save()
+            return "white" if game.white_player_id == self.user.id else "black"
+
         if game.white_player_id is None:
             game.white_player = self.user
-            game.status = "waiting"
+            game.status = "active"
             game.save()
             return "white"
 

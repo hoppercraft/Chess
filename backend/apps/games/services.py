@@ -26,17 +26,7 @@ def save_game(user, validated_data):
 
 
 def _update_stats(user, result):
-    user.games_played += 1
-    if result == 'win':
-        user.games_won += 1
-    elif result == 'loss':
-        user.games_lost += 1
-    else:
-        user.games_drawn += 1
-    user.save(update_fields=['games_played', 'games_won', 'games_lost', 'games_drawn'])
-
-    # Keep the accounts.Profile counters (used for the public-facing profile)
-    # in sync too, if the user has one.
+    """Update the accounts.Profile counters used for the public-facing profile."""
     profile = getattr(user, 'profile', None)
     if profile is not None:
         profile.games_played += 1

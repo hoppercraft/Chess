@@ -12,8 +12,10 @@ export default function ChessBoard({
   highlightSquares,
   onPieceDrop,
   onSquareClick,
+  boardOrientation: orientationOverride,
 }) {
-  const { boardOrientation } = useGame()
+  const { boardOrientation: contextOrientation } = useGame()
+  const boardOrientation = orientationOverride ?? contextOrientation   // ← use override if provided
 
   return (
     <section className="board-section">
@@ -34,26 +36,11 @@ export default function ChessBoard({
         <AnimatePresence mode="wait">
           <motion.div
             key={boardOrientation}
-            initial={{
-              opacity: 0,
-              scale: 0.96,
-            }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              scale: 1.04,
-            }}
-            transition={{
-              duration: 0.22,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-            }}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.04 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{ position: 'absolute', inset: 0 }}
           >
             <Chessboard
               options={{

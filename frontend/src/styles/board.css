@@ -1458,6 +1458,8 @@ body {
   align-items: center;
   z-index: 1000;
   animation: fade-in 0.2s ease-out;
+  overflow-y: auto;   
+  padding: 20px 0;
 }
 
 @keyframes fade-in {
@@ -1472,6 +1474,8 @@ body {
   padding: 32px 40px;
   max-width: 420px;
   width: 90%;
+  max-height: 110vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-deep), 0 0 40px rgba(92, 51, 23, 0.3);
   text-align: center;
   animation: modal-slide-up 0.3s ease-out;

@@ -1,9 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from apps.games.models import User
-
-from .models import Profile
+from .models import User, Profile
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -29,16 +27,21 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = User
-		fields = (
-			'id',
-			'username',
-			'email',
-			'games_played',
-			'games_won',
-			'games_lost',
-			'games_drawn',
-			'created_at',
-		)
-		read_only_fields = fields
+    games_played = serializers.IntegerField(source='profile.games_played', read_only=True)
+    games_won = serializers.IntegerField(source='profile.games_won', read_only=True)
+    games_lost = serializers.IntegerField(source='profile.games_lost', read_only=True)
+    games_drawn = serializers.IntegerField(source='profile.games_drawn', read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'email',
+            'games_played',
+            'games_won',
+            'games_lost',
+            'games_drawn',
+            'created_at',
+        )
+        read_only_fields = fields
