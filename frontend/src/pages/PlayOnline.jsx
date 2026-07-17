@@ -17,7 +17,6 @@ export default function PlayOnline() {
   }
 
   const gameActive = status === 'active'
-  const turnLabel = turn === 'w' ? 'white' : 'black'
 
   function attemptMove(from, to) {
     if (!gameActive) return
@@ -51,7 +50,7 @@ export default function PlayOnline() {
     <main className="chess-app">
       <p className="dash-hero-sub">
         Room: {roomCode} — {connected ? 'Connected' : 'Connecting…'}
-        {status === 'waiting' && ' — waiting for opponent'}
+        {status === ' waiting' && ' — waiting for opponent'}
       </p>
       {error && <div className="auth-error">{error}</div>}
       {status === 'finished' && (
@@ -62,7 +61,7 @@ export default function PlayOnline() {
       {position && (
         <ChessBoard
           position={position}
-          turn={turnLabel}
+          turn={turn}
           gameStatus={status}
           highlightSquares={highlightSquares}
           onPieceDrop={onPieceDrop}
