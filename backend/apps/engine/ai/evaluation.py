@@ -67,7 +67,7 @@ def evaluate_board(board: chess.Board, level: int) -> int:
 				continue
 
 			king_file = chess.square_file(king_square)
-			if king_file not in (3, 4):
+			if king_file in (5, 6, 7):
 				continue
 
 			has_pawn_cover = any(

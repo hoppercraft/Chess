@@ -49,3 +49,6 @@ def select_engine_move(board: chess.Board, level: int) -> chess.Move | None:
 
         if beta <= alpha:
             break
+
+    print("best_move", best_move)
+    return best_move
