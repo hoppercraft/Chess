@@ -1,12 +1,14 @@
 import random
 
 import chess
-from rest_framework              import status
-from rest_framework.decorators  import api_view, permission_classes
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from rest_framework.response    import Response
+from rest_framework.response import Response
 
 from apps.engine.ai.minimax import select_engine_move
+from apps.engine.serializers import BestMoveRequestSerializer, FenRequestSerializer
+from apps.engine.utils.board_utils import apply_uci_move, build_board
 
 
 @api_view(['POST'])
@@ -17,13 +19,17 @@ def random_move(request):
     Body: { fen: str }
     Returns: { move: "e2e4" } in UCI format
     """
-    fen = request.data.get('fen', '')
+    serializer = FenRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    fen = serializer.validated_data['fen']
 
     if not fen:
         return Response({'message': 'fen is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        board = chess.Board(fen)
+        board = build_board(fen)
     except ValueError:
         return Response({'message': 'Invalid FEN string.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -47,15 +53,24 @@ def validate_move(request):
     AI engine (minimax/alpha-beta) module is complete. For now the frontend
     handles all move validation locally.
     """
-    fen  = request.data.get('fen', '')
+    fen = request.data.get('fen', '')
     from_ = request.data.get('from', '')
-    to   = request.data.get('to', '')
+    to = request.data.get('to', '')
+    promotion = request.data.get('promotion')
 
     if not all([fen, from_, to]):
         return Response({'message': 'fen, from, and to are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Placeholder — always returns legal=True until engine is wired up
-    return Response({'legal': True, 'new_fen': None})
+    try:
+        board = build_board(fen)
+    except ValueError:
+        return Response({'message': 'Invalid FEN string.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    legal, move = apply_uci_move(board, from_, to, promotion)
+    if not legal or move is None:
+        return Response({'legal': False, 'new_fen': None})
+
+    return Response({'legal': True, 'new_fen': board.fen(), 'move': move.uci()})
 
 
 @api_view(['POST'])
@@ -68,14 +83,18 @@ def best_move(request):
 
     Maps frontend level to depth: Level 1=depth 1, Level 2=depth 2, Level 3=depth 3, Level 4=depth 4
     """
-    fen   = request.data.get('fen', '')
-    depth = request.data.get('depth', 3)
+    serializer = BestMoveRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    fen = serializer.validated_data['fen']
+    depth = serializer.validated_data.get('depth', 3)
 
     if not fen:
         return Response({'message': 'fen is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        board = chess.Board(fen)
+        board = build_board(fen)
     except ValueError:
         return Response({'message': 'Invalid FEN string.'}, status=status.HTTP_400_BAD_REQUEST)
 
