@@ -92,25 +92,27 @@ export default function PlayOnline() {
       />
 
       <aside className="side-panel">
-        <div className="game-info">
-          <div className="game-info-header">Room {roomCode}</div>
-          <div className="game-info-body">
-            <div className="info-row">
-              <span className="info-label">Status</span>
-              <span className="info-value">
-                {connected ? 'Connected' : 'Connecting…'}
-              </span>
-            </div>
-            {roomStatus === 'waiting' && (
+        <div className="status-row">
+          <div className="game-info">
+            <div className="game-info-header">Room {roomCode}</div>
+            <div className="game-info-body">
               <div className="info-row">
-                <span className="info-label">Waiting</span>
-                <span className="info-value">for opponent…</span>
+                <span className="info-label">Status</span>
+                <span className="info-value">
+                  {connected ? 'Connected' : 'Connecting…'}
+                </span>
               </div>
-            )}
+              {roomStatus === 'waiting' && (
+                <div className="info-row">
+                  <span className="info-label">Waiting</span>
+                  <span className="info-value">for opponent…</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        <GameInfo turn={turn} moveCount={moveHistory.length} />
+          <GameInfo turn={turn} moveCount={moveHistory.length} />
+        </div>
 
         <CapturedPieces
           capturedByWhite={capturedByWhite}
