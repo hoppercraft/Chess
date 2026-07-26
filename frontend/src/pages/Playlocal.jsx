@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext.jsx'
-import ChessBoard     from '../components/board/ChessBoard.jsx'
-import GameInfo       from '../components/game/GameInfo.jsx'
-import GameControls   from '../components/game/GameControls.jsx'
-import MoveHistory    from '../components/game/MoveHistory.jsx'
+import ChessBoard from '../components/board/ChessBoard.jsx'
+import GameInfo from '../components/game/GameInfo.jsx'
+import GameControls from '../components/game/GameControls.jsx'
+import MoveHistory from '../components/game/MoveHistory.jsx'
 import CapturedPieces from '../components/game/CapturedPieces.jsx'
 import PromotionModal from '../components/game/PromotionModal.jsx'
-import GameOverModal  from '../components/game/GameOverModal.jsx'
+import GameOverModal from '../components/game/GameOverModal.jsx'
 import LocalSetupModal from '../components/board/LocalSetupModal.jsx'
 import Timer from "../components/game/Timer.jsx";
 import Toast from '../components/common/Toast.jsx'
@@ -42,10 +42,10 @@ export default function PlayLocal() {
         <GameInfo turn={turn} moveCount={moveHistory.length} />
         <Timer />
 
-         <CapturedPieces
-         capturedByWhite={capturedByWhite}
-         capturedByBlack={capturedByBlack}
-         />
+        <CapturedPieces
+          capturedByWhite={capturedByWhite}
+          capturedByBlack={capturedByBlack}
+        />
         <GameControls
           showHistory={showHistory}
           onToggleHistory={() => setShowHistory(p => !p)}
@@ -53,7 +53,7 @@ export default function PlayLocal() {
         />
         {showHistory && <MoveHistory moveHistory={moveHistory} />}
       </aside>
-      {promotionData && ( <PromotionModal color={promotionData.color} onSelect={promotePawn} /> )}
+      {promotionData && (<PromotionModal color={promotionData.color} onSelect={promotePawn} />)}
       {showFlipPrompt && <LocalSetupModal onSelect={startLocalGame} />}
       <GameOverModal
         gameStatus={gameStatus}

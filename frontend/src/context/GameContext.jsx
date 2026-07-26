@@ -9,8 +9,11 @@ import { positionToFen } from '../logic/board/fenConverter.js'
 import { applyMove } from '../logic/engine/applyMove.js'
 import { gameApi } from '../api/gameApi.js'
 import { useAuth } from './AuthContext.jsx'
+import { isInsufficientMaterial, isFiftyMoveRule, isThreefoldRepetition } from '../logic/validation/isDrawCondition.js'
 
 const API_BASE = 'http://localhost:8000/api'
+
+
 
 const GameContext = createContext(null)
 
@@ -206,6 +209,9 @@ useEffect(() => {
   const [lastMove,         setLastMove]         = useState(null)
   const [capturedByWhite,  setCapturedByWhite]  = useState([])
   const [capturedByBlack,  setCapturedByBlack]  = useState([])
+  
+  const [halfMoveClock,   setHalfMoveClock]   = useState(0)
+  const [positionHistory, setPositionHistory] = useState([])
   const gameSavedRef = useRef(false) // guards against saving the same finished game twice
 
   // ---------------- Toast (save feedback) ----------------
@@ -243,6 +249,9 @@ useEffect(() => {
 
     let result, termination
     if (gameStatus === 'stalemate') {
+      result = 'draw'
+      termination = 'stalemate'
+    } else if (gameStatus === 'draw') {
       result = 'draw'
       termination = 'stalemate'
     } else {
@@ -347,11 +356,26 @@ function onPieceDrop({ sourceSquare, targetSquare }) {
 
   const nextTurn = turn === 'w' ? 'b' : 'w'
 
+  const isPawnMove = piece.pieceType[1] === 'P'
+  const isCapture  = !!position[targetSquare]
+  const newHalfMoveClock = (isPawnMove || isCapture) ? 0 : halfMoveClock + 1
+  setHalfMoveClock(newHalfMoveClock)
+
+  const fenKey = positionToFen(newPosition, nextTurn, rights, enPassantSquare, 0, 1)
+  .split(' ').slice(0, 4).join(' ')
+  const newPositionHistory = [...positionHistory, fenKey]
+  setPositionHistory(newPositionHistory)
+
   let newGameStatus = 'playing'
   if (isCheckmate(newPosition, nextTurn)) {
     newGameStatus = 'checkmate'
-  } else if (isStalemate(newPosition, nextTurn)) {
-    newGameStatus = 'stalemate'
+  } else if (
+    isStalemate(newPosition, nextTurn)          ||
+    isInsufficientMaterial(newPosition)          ||
+    isFiftyMoveRule(newHalfMoveClock)            ||
+    isThreefoldRepetition(newPositionHistory)
+  ) {
+    newGameStatus = 'draw'
   } else if (isCheck(newPosition, nextTurn)) {
     newGameStatus = 'check'
   }
@@ -501,6 +525,8 @@ function resetGame(mode) {
   setWhiteTime(timeControl.initial)
   setBlackTime(timeControl.initial)
   setActiveTimer('w')
+  setHalfMoveClock(0)
+  setPositionHistory([])
 }
 
 function startLocalGame(settings) {

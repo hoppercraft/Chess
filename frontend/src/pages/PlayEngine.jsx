@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext.jsx'
-import ChessBoard     from '../components/board/ChessBoard.jsx'
-import GameInfo       from '../components/game/GameInfo.jsx'
-import GameControls   from '../components/game/GameControls.jsx'
-import MoveHistory    from '../components/game/MoveHistory.jsx'
+import ChessBoard from '../components/board/ChessBoard.jsx'
+import GameInfo from '../components/game/GameInfo.jsx'
+import GameControls from '../components/game/GameControls.jsx'
+import MoveHistory from '../components/game/MoveHistory.jsx'
 import CapturedPieces from '../components/game/CapturedPieces.jsx'
 import PromotionModal from '../components/game/PromotionModal.jsx'
-import GameOverModal  from '../components/game/GameOverModal.jsx'
+import GameOverModal from '../components/game/GameOverModal.jsx'
 import EngineSetupModal from '../components/board/EngineSetupModal.jsx'
 import Timer from '../components/game/Timer.jsx'
 import Toast from '../components/common/Toast.jsx'
@@ -73,13 +73,13 @@ export default function PlayEngine() {
           capturedByWhite={capturedByWhite}
           capturedByBlack={capturedByBlack}
         />
-        
+
         <GameControls
           showHistory={showHistory}
           onToggleHistory={() => setShowHistory(p => !p)}
           onNewGame={() => resetGame('engine')}
         />
-        
+
         {showHistory && <MoveHistory moveHistory={moveHistory} />}
       </aside>
 

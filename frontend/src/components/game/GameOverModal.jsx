@@ -5,7 +5,7 @@
  * game or head back to the dashboard.
  */
 export default function GameOverModal({ gameStatus, turn, activeTimer, onNewGame, onGoDashboard }) {
-  if (gameStatus !== 'checkmate' && gameStatus !== 'stalemate' && gameStatus !== 'timeout') {
+  if (gameStatus !== 'checkmate' && gameStatus !== 'stalemate' && gameStatus !== 'timeout' && gameStatus !== 'draw') {
     return null
   }
 
@@ -15,6 +15,9 @@ export default function GameOverModal({ gameStatus, turn, activeTimer, onNewGame
   if (gameStatus === 'stalemate') {
     title = 'Draw'
     subtitle = 'Stalemate — no legal moves remain'
+  } else if (gameStatus === 'draw') {
+    title = 'Draw'
+    subtitle = 'Threefold repetition, 50-move rule, or insufficient material.'
   } else {
     const loserColor = gameStatus === 'timeout' ? activeTimer : turn
     const winner = loserColor === 'w' ? 'Black' : 'White'
