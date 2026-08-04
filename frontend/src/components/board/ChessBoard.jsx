@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import GameStatus from '../game/GameStatus.jsx'
 import { useGame } from '../../context/GameContext.jsx'
 
-const BOARD_SIZE = 480
+const BOARD_SIZE = 600
 
 export default function ChessBoard({
   position,

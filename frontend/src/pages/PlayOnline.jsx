@@ -91,53 +91,50 @@ export default function PlayOnline() {
         boardOrientation={color === 'black' ? 'black' : 'white'}
       />
 
-      <aside className="side-panel">
-        <div className="status-row">
-          <div className="game-info">
-            <div className="game-info-header">Room {roomCode}</div>
-            <div className="game-info-body">
-              <div className="info-row">
-                <span className="info-label">Status</span>
-                <span className="info-value">
-                  {connected ? 'Connected' : 'Connecting…'}
-                </span>
-              </div>
-              {roomStatus === 'waiting' && (
-                <div className="info-row">
-                  <span className="info-label">Waiting</span>
-                  <span className="info-value">for opponent…</span>
-                </div>
-              )}
-            </div>
+    <aside className="side-panel">
+      {/* Room card */}
+      <div className="game-info">
+        <div className="game-info-header">Room {roomCode}</div>
+        <div className="game-info-body">
+          <div className="info-row">
+            <span className="info-label">Status</span>
+            <span className="info-value">
+              {connected ? 'Connected' : 'Connecting…'}
+            </span>
           </div>
-
-          <GameInfo turn={turn} moveCount={moveHistory.length} />
+      {roomStatus === 'waiting' && (
+        <div className="info-row">
+          <span className="info-label">Waiting</span>
+          <span className="info-value">for opponent…</span>
         </div>
+      )}
+      </div>
+    </div>
+    <GameInfo turn={turn} moveCount={moveHistory.length} />
 
-        <CapturedPieces
-          capturedByWhite={capturedByWhite}
-          capturedByBlack={capturedByBlack}
-        />
-
-        <div className="btn-row">
-          <button
-            className={`btn-history ${showHistory ? 'active' : ''}`}
-            onClick={() => setShowHistory(p => !p)}
-          >
-            {showHistory ? 'Hide History' : 'Move History'}
-          </button>
-          <button className="btn-new-game" onClick={() => navigate('/play/online')}>
-            Leave Room
-          </button>
-        </div>
-
-        {showHistory && <MoveHistory moveHistory={moveHistory} />}
-      </aside>
-
+    <CapturedPieces
+    capturedByWhite={capturedByWhite}
+    capturedByBlack={capturedByBlack}
+    />
+      <div className="btn-row">
+        <button
+          className={`btn-history ${showHistory ? 'active' : ''}`}
+          onClick={() => setShowHistory(p => !p)}
+        >
+          {showHistory ? 'Hide History' : 'Move History'}
+        </button>
+    <button
+      className="btn-new-game"
+      onClick={() => navigate('/play/online')}
+    >
+      Leave Room
+    </button>
+      </div>
+    {showHistory && <MoveHistory moveHistory={moveHistory} />}
+    </aside>
       {promotionData && (
         <PromotionModal color={promotionData.color} onSelect={handlePromotionSelect} />
       )}
-
       {error && (
         <div className="auth-error" style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)' }}>
           {error}

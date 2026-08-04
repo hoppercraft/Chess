@@ -479,3 +479,9 @@ body {
   }
 }
 
+/* ── Status row (Room info + Game info side by side) ──────────────────────── */
+.status-row {
+  display: flex;
+  flex-direction: ro;
+  gap: 20px;
+}
